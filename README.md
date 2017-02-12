@@ -2,6 +2,9 @@
 
 Go-Dump is a package which helps you to dump a struct to `SdtOut`, any `io.Writer`, or a `map[string]string{}`.
 
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)]
+(http://godoc.org/github.com/fsamin/go-dump)
+
 ## Sample usage
 
 ````golang
