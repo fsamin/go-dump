@@ -109,8 +109,8 @@ TM.C.2.Tbis.Cter: lel
 
 func TestDumpArray(t *testing.T) {
 	a := []T{
-		T{23, "foo bar", Tbis{"lol", "lol"}},
-		T{24, "fee bor", Tbis{"lel", "lel"}},
+		{23, "foo bar", Tbis{"lol", "lol"}},
+		{24, "fee bor", Tbis{"lel", "lel"}},
 	}
 
 	out := &bytes.Buffer{}
@@ -141,8 +141,8 @@ func TestDumpStruct_Array(t *testing.T) {
 		A: 0,
 		B: "here",
 		C: []T{
-			T{23, "foo bar", Tbis{"lol", "lol"}},
-			T{24, "fee bor", Tbis{"lel", "lel"}},
+			{23, "foo bar", Tbis{"lol", "lol"}},
+			{24, "fee bor", Tbis{"lel", "lel"}},
 		},
 		D: []bool{true, false},
 	}
