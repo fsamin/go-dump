@@ -160,8 +160,16 @@ func fDumpMap(w io.Writer, i interface{}, roots ...string) error {
 		key = strings.Replace(key, " ", "_", -1)
 		key = strings.Replace(key, "/", "_", -1)
 		roots := append(roots, key)
-		if err := fDumpStruct(w, v.MapIndex(k).Interface(), roots...); err != nil {
-			return err
+		switch v.MapIndex(k).Kind() {
+		case reflect.Array, reflect.Slice, reflect.Map, reflect.Struct:
+			if err := fDumpStruct(w, v.MapIndex(k).Interface(), roots...); err != nil {
+				return err
+			}
+		default:
+			res := fmt.Sprintf("%s: %v\n", strings.Join(roots, "."), v.MapIndex(k).Interface())
+			if _, err := w.Write([]byte(res)); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
