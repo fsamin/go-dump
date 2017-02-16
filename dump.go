@@ -155,6 +155,7 @@ func fDumpArray(w io.Writer, i interface{}, roots ...string) error {
 func fDumpMap(w io.Writer, i interface{}, roots ...string) error {
 	v := reflect.ValueOf(i)
 	keys := v.MapKeys()
+	//TODO  should manager map of pointer
 	for _, k := range keys {
 		key := fmt.Sprintf("%v", k.Interface())
 		key = strings.Replace(key, " ", "_", -1)
@@ -183,7 +184,7 @@ func (m *mapWriter) Write(p []byte) (int, error) {
 	if m.data == nil {
 		m.data = map[string]string{}
 	}
-	tuple := strings.Split(string(p), ":")
+	tuple := strings.SplitN(string(p), ":", 2)
 	if len(tuple) != 2 {
 		return 0, errors.New("malformatted bytes")
 	}
