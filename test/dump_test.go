@@ -18,7 +18,7 @@ func TestDumpStruct(t *testing.T) {
 	a := T{23, "foo bar"}
 
 	out := &bytes.Buffer{}
-	err := dump.FDump(out, a)
+	err := dump.Fdump(out, a)
 	assert.NoError(t, err)
 
 	expected := `T.A: 23
@@ -44,7 +44,7 @@ func TestDumpStruct_Nested(t *testing.T) {
 	a := T{23, "foo bar", Tbis{"lol", "lol"}}
 
 	out := &bytes.Buffer{}
-	err := dump.FDump(out, a)
+	err := dump.Fdump(out, a)
 	assert.NoError(t, err)
 
 	expected := `T.A: 23
@@ -67,7 +67,7 @@ func TestDumpStruct_NestedWithPointer(t *testing.T) {
 	a := TP{&i, "foo bar", &Tbis{"lol", "lol"}}
 
 	out := &bytes.Buffer{}
-	err := dump.FDump(out, a)
+	err := dump.Fdump(out, a)
 	assert.NoError(t, err)
 
 	expected := `TP.A: 23
@@ -93,7 +93,7 @@ func TestDumpStruct_Map(t *testing.T) {
 	a.C["2"] = Tbis{"lel", "lel"}
 
 	out := &bytes.Buffer{}
-	err := dump.FDump(out, a)
+	err := dump.Fdump(out, a)
 	assert.NoError(t, err)
 
 	expected := `TM.A: 23
@@ -114,7 +114,7 @@ func TestDumpArray(t *testing.T) {
 	}
 
 	out := &bytes.Buffer{}
-	err := dump.FDump(out, a)
+	err := dump.Fdump(out, a)
 	assert.NoError(t, err)
 
 	expected := `0.T.A: 23
@@ -148,7 +148,7 @@ func TestDumpStruct_Array(t *testing.T) {
 	}
 
 	out := &bytes.Buffer{}
-	err := dump.FDump(out, a)
+	err := dump.Fdump(out, a)
 	assert.NoError(t, err)
 	expected := `TS.A: 0
 TS.B: here
@@ -190,4 +190,31 @@ func TestToMap(t *testing.T) {
 	}
 	assert.True(t, m1Found, "T.A not found in map")
 	assert.True(t, m2Found, "T.B not found in map")
+}
+
+func TestToMapWithFormatter(t *testing.T) {
+	type T struct {
+		A int
+		B string
+	}
+
+	a := T{23, "foo bar"}
+
+	m, err := dump.ToMap(a, dump.WithDefaultLowerCaseFormatter())
+	t.Log(m)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(m))
+	var m1Found, m2Found bool
+	for k, v := range m {
+		if k == "t.a" {
+			m1Found = true
+			assert.Equal(t, "23", v)
+		}
+		if k == "t.b" {
+			m2Found = true
+			assert.Equal(t, "foo bar", v)
+		}
+	}
+	assert.True(t, m1Found, "t.a not found in map")
+	assert.True(t, m2Found, "t.b not found in map")
 }
