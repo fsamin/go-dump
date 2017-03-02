@@ -1,12 +1,13 @@
 package test
 
 import (
+	"bytes"
 	"testing"
 
-	"bytes"
+	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/fsamin/go-dump"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestDumpStruct(t *testing.T) {
@@ -49,8 +50,8 @@ func TestDumpStruct_Nested(t *testing.T) {
 
 	expected := `T.A: 23
 T.B: foo bar
-T.C.Tbis.Cbis: lol
-T.C.Tbis.Cter: lol
+T.C.Cbis: lol
+T.C.Cter: lol
 `
 	assert.Equal(t, expected, out.String())
 
@@ -72,8 +73,8 @@ func TestDumpStruct_NestedWithPointer(t *testing.T) {
 
 	expected := `TP.A: 23
 TP.B: foo bar
-TP.C.Tbis.Cbis: lol
-TP.C.Tbis.Cter: lol
+TP.C.Cbis: lol
+TP.C.Cter: lol
 `
 	assert.Equal(t, expected, out.String())
 
@@ -117,14 +118,14 @@ func TestDumpArray(t *testing.T) {
 	err := dump.Fdump(out, a)
 	assert.NoError(t, err)
 
-	expected := `0.T.A: 23
-0.T.B: foo bar
-0.T.C.Tbis.Cbis: lol
-0.T.C.Tbis.Cter: lol
-1.T.A: 24
-1.T.B: fee bor
-1.T.C.Tbis.Cbis: lel
-1.T.C.Tbis.Cter: lel
+	expected := `0.A: 23
+0.B: foo bar
+0.C.Cbis: lol
+0.C.Cter: lol
+1.A: 24
+1.B: fee bor
+1.C.Cbis: lel
+1.C.Cter: lel
 `
 	assert.Equal(t, expected, out.String())
 }
@@ -152,14 +153,14 @@ func TestDumpStruct_Array(t *testing.T) {
 	assert.NoError(t, err)
 	expected := `TS.A: 0
 TS.B: here
-TS.C.C0.T.A: 23
-TS.C.C0.T.B: foo bar
-TS.C.C0.T.C.Tbis.Cbis: lol
-TS.C.C0.T.C.Tbis.Cter: lol
-TS.C.C1.T.A: 24
-TS.C.C1.T.B: fee bor
-TS.C.C1.T.C.Tbis.Cbis: lel
-TS.C.C1.T.C.Tbis.Cter: lel
+TS.C.C0.A: 23
+TS.C.C0.B: foo bar
+TS.C.C0.C.Cbis: lol
+TS.C.C0.C.Cter: lol
+TS.C.C1.A: 24
+TS.C.C1.B: fee bor
+TS.C.C1.C.Cbis: lel
+TS.C.C1.C.Cter: lel
 TS.D.D0: true
 TS.D.D1: false
 `
@@ -217,4 +218,44 @@ func TestToMapWithFormatter(t *testing.T) {
 	}
 	assert.True(t, m1Found, "t.a not found in map")
 	assert.True(t, m2Found, "t.b not found in map")
+}
+
+func TestComplex(t *testing.T) {
+	p := sdk.Pipeline{
+		Name: "MyPipeline",
+		Type: sdk.BuildPipeline,
+		Stages: []sdk.Stage{
+			{
+				BuildOrder: 1,
+				Name:       "stage 1",
+				Enabled:    true,
+				Jobs: []sdk.Job{
+					{
+						Action: sdk.Action{
+							Name:        "Job 1",
+							Description: "This is job 1",
+							Actions: []sdk.Action{
+								{
+
+									Type: sdk.BuiltinAction,
+									Name: sdk.ScriptAction,
+									Parameters: []sdk.Parameter{
+										{
+											Name:  "script",
+											Type:  sdk.TextParameter,
+											Value: "echo lol",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	_, err := dump.ToMap(p, dump.WithDefaultLowerCaseFormatter())
+	t.Log(dump.Sdump(p))
+	assert.NoError(t, err)
 }
