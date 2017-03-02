@@ -129,3 +129,7 @@ Pipeline.Stages.Stages0.PipelineID: 0
 ## More examples
 
 See [unit tests](test/dump_test.go) for more examples.
+
+## Dependencies
+
+Go-Dump needs Go >= 1.7 and has no dependencies :).
