@@ -337,3 +337,13 @@ func format(s string, formatters []KeyFormatterFunc) string {
 	}
 	return s
 }
+
+// MustSdump is a helper that wraps a call to a function returning (string, error)
+// and panics if the error is non-nil.
+func MustSdump(i interface{}, formatters ...KeyFormatterFunc) string {
+	s, err := Sdump(i, formatters...)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}

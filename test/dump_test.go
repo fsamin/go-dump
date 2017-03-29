@@ -259,3 +259,16 @@ func TestComplex(t *testing.T) {
 	t.Log(dump.Sdump(p))
 	assert.NoError(t, err)
 }
+
+func TestPrettyDump(t *testing.T) {
+	var data = struct {
+		dump.PrettyDump
+		s string
+		i int
+	}{}
+
+	data.s = "it's a string"
+
+	t.Logf("%#v", data)
+
+}
