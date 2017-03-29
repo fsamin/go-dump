@@ -256,19 +256,6 @@ func TestComplex(t *testing.T) {
 	}
 
 	_, err := dump.ToMap(p, dump.WithDefaultLowerCaseFormatter())
-	t.Log(dump.Sdump(p))
+	t.Log(dump.MustSdump(p))
 	assert.NoError(t, err)
-}
-
-func TestPrettyDump(t *testing.T) {
-	var data = struct {
-		dump.PrettyDump
-		s string
-		i int
-	}{}
-
-	data.s = "it's a string"
-
-	t.Logf("%#v", data)
-
 }
