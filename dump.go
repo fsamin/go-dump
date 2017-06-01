@@ -281,10 +281,13 @@ func fDumpMap(w map[string]string, i interface{}, roots []string, formatters ...
 			if value.Kind() == reflect.Interface {
 				im := map[string]interface{}{}
 				if mapstructure.Decode(value.Interface(), im) != nil {
-					if err := fDumpMap(w, im, roots, formatters...); err != nil {
-						return err
+					if len(im) > 0 {
+						if err := fDumpMap(w, im, roots, formatters...); err != nil {
+							return err
+						}
+						continue
 					}
-					continue
+
 				}
 				am, ok := value.Interface().([]interface{})
 				if ok {
