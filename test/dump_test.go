@@ -259,3 +259,15 @@ func TestComplex(t *testing.T) {
 	t.Log(dump.Sdump(p))
 	assert.NoError(t, err)
 }
+
+func TestMapStringInterface( t *testing.T) {
+	myMap := make(map[string]interface{})
+	myMap["id"] = "ID"
+	myMap["name"] = "foo"
+	myMap["value"] = "bar"
+
+	result, err := dump.ToMap(myMap)
+	t.Log(dump.Sdump(myMap))
+	assert.NoError(t, err)
+	assert.Equal(t, 3, len(result))
+}
