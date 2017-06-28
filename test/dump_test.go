@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
+
+	"encoding/json"
 
 	"github.com/fsamin/go-dump"
 )
@@ -260,7 +263,7 @@ func TestComplex(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestMapStringInterface( t *testing.T) {
+func TestMapStringInterface(t *testing.T) {
 	myMap := make(map[string]interface{})
 	myMap["id"] = "ID"
 	myMap["name"] = "foo"
@@ -270,4 +273,24 @@ func TestMapStringInterface( t *testing.T) {
 	t.Log(dump.Sdump(myMap))
 	assert.NoError(t, err)
 	assert.Equal(t, 3, len(result))
+}
+
+func TestFromJSON(t *testing.T) {
+	js := []byte(`{
+    "blabla": "lol log",
+    "boubou": {
+        "yo": 1
+    }
+}`)
+
+	var i interface{}
+	test.NoError(t, json.Unmarshal(js, &i))
+
+	result, err := dump.ToMap(i)
+	t.Log(dump.Sdump(i))
+	t.Log(result)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(result))
+	assert.Equal(t, "lol log", result["blabla"])
+	assert.Equal(t, "1", result["boubou.yo"])
 }
