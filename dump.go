@@ -203,6 +203,11 @@ func fdumpStruct(w map[string]string, i interface{}, roots []string, formatters 
 
 func fDumpArray(w map[string]string, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
 	v := reflect.ValueOf(i)
+
+	nodeLen := append(roots, "Len")
+	nodeLenFormatted := strings.Join(sliceFormat(nodeLen, formatters), ".")
+	w[nodeLenFormatted] = fmt.Sprintf("%d", v.Len())
+
 	for i := 0; i < v.Len(); i++ {
 		var l string
 		var croots []string
@@ -265,6 +270,11 @@ func fDumpArray(w map[string]string, i interface{}, roots []string, formatters .
 func fDumpMap(w map[string]string, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
 	v := reflect.ValueOf(i)
 	keys := v.MapKeys()
+
+	nodeLen := append(roots, "Len")
+	nodeLenFormatted := strings.Join(sliceFormat(nodeLen, formatters), ".")
+	w[nodeLenFormatted] = fmt.Sprintf("%d", len(keys))
+
 	for _, k := range keys {
 		key := fmt.Sprintf("%v", k.Interface())
 		roots := append(roots, key)
