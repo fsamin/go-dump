@@ -106,6 +106,7 @@ TM.C.1.Tbis.Cbis: lol
 TM.C.1.Tbis.Cter: lol
 TM.C.2.Tbis.Cbis: lel
 TM.C.2.Tbis.Cter: lel
+TM.C.Len: 2
 `
 	assert.Equal(t, expected, out.String())
 
@@ -129,6 +130,7 @@ func TestDumpArray(t *testing.T) {
 1.B: fee bor
 1.C.Cbis: lel
 1.C.Cter: lel
+Len: 2
 `
 	assert.Equal(t, expected, out.String())
 }
@@ -164,8 +166,10 @@ TS.C.C1.A: 24
 TS.C.C1.B: fee bor
 TS.C.C1.C.Cbis: lel
 TS.C.C1.C.Cter: lel
+TS.C.Len: 2
 TS.D.D0: true
 TS.D.D1: false
+TS.D.Len: 2
 `
 	assert.Equal(t, expected, out.String())
 }
@@ -258,8 +262,59 @@ func TestComplex(t *testing.T) {
 		},
 	}
 
-	_, err := dump.ToMap(p, dump.WithDefaultLowerCaseFormatter())
 	t.Log(dump.MustSdump(p))
+
+	out := &bytes.Buffer{}
+	err := dump.Fdump(out, p)
+	assert.NoError(t, err)
+	expected := `Pipeline.AttachedApplication.Len: 0
+Pipeline.GroupPermission.Len: 0
+Pipeline.ID: 0
+Pipeline.LastModified: 0
+Pipeline.Name: MyPipeline
+Pipeline.Parameter.Len: 0
+Pipeline.Permission: 0
+Pipeline.ProjectID: 0
+Pipeline.Stages.Len: 1
+Pipeline.Stages.Stages0.BuildOrder: 1
+Pipeline.Stages.Stages0.Enabled: true
+Pipeline.Stages.Stages0.ID: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Actions.Len: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Enabled: false
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Final: false
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.ID: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.LastModified: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Name: Script
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Len: 1
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.ID: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Name: script
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Type: text
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Value: echo lol
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Requirements.Len: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Type: Builtin
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Len: 1
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Description: This is job 1
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Enabled: false
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Final: false
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.ID: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.LastModified: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Name: Job 1
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Parameters.Len: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Requirements.Len: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.Enabled: false
+Pipeline.Stages.Stages0.Jobs.Jobs0.LastModified: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.PipelineActionID: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.PipelineStageID: 0
+Pipeline.Stages.Stages0.Jobs.Len: 1
+Pipeline.Stages.Stages0.LastModified: 0
+Pipeline.Stages.Stages0.Name: stage 1
+Pipeline.Stages.Stages0.PipelineBuildJobs.Len: 0
+Pipeline.Stages.Stages0.PipelineID: 0
+Pipeline.Stages.Stages0.Prerequisites.Len: 0
+Pipeline.Stages.Stages0.RunJobs.Len: 0
+Pipeline.Type: build
+`
+	assert.Equal(t, expected, out.String())
 	assert.NoError(t, err)
 }
 
@@ -272,7 +327,7 @@ func TestMapStringInterface(t *testing.T) {
 	result, err := dump.ToMap(myMap)
 	t.Log(dump.Sdump(myMap))
 	assert.NoError(t, err)
-	assert.Equal(t, 3, len(result))
+	assert.Equal(t, 4, len(result))
 }
 
 func TestFromJSON(t *testing.T) {
@@ -290,7 +345,97 @@ func TestFromJSON(t *testing.T) {
 	t.Log(dump.Sdump(i))
 	t.Log(result)
 	assert.NoError(t, err)
-	assert.Equal(t, 2, len(result))
+	assert.Equal(t, 4, len(result))
 	assert.Equal(t, "lol log", result["blabla"])
 	assert.Equal(t, "1", result["boubou.yo"])
+}
+func TestComplexWithFormatter(t *testing.T) {
+	p := sdk.Pipeline{
+		Name: "MyPipeline",
+		Type: sdk.BuildPipeline,
+		Stages: []sdk.Stage{
+			{
+				BuildOrder: 1,
+				Name:       "stage 1",
+				Enabled:    true,
+				Jobs: []sdk.Job{
+					{
+						Action: sdk.Action{
+							Name:        "Job 1",
+							Description: "This is job 1",
+							Actions: []sdk.Action{
+								{
+
+									Type: sdk.BuiltinAction,
+									Name: sdk.ScriptAction,
+									Parameters: []sdk.Parameter{
+										{
+											Name:  "script",
+											Type:  sdk.TextParameter,
+											Value: "echo lol",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	t.Log(dump.MustSdump(p))
+
+	out := &bytes.Buffer{}
+	err := dump.Fdump(out, p, dump.WithDefaultLowerCaseFormatter())
+	assert.NoError(t, err)
+	expected := `pipeline.attachedapplication.len: 0
+pipeline.grouppermission.len: 0
+pipeline.id: 0
+pipeline.lastmodified: 0
+pipeline.name: MyPipeline
+pipeline.parameter.len: 0
+pipeline.permission: 0
+pipeline.projectid: 0
+pipeline.stages.len: 1
+pipeline.stages.stages0.buildorder: 1
+pipeline.stages.stages0.enabled: true
+pipeline.stages.stages0.id: 0
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.actions.len: 0
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.enabled: false
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.final: false
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.id: 0
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.lastmodified: 0
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.name: Script
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.len: 1
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.parameters0.id: 0
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.parameters0.name: script
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.parameters0.type: text
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.parameters0.value: echo lol
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.requirements.len: 0
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.type: Builtin
+pipeline.stages.stages0.jobs.jobs0.action.actions.len: 1
+pipeline.stages.stages0.jobs.jobs0.action.description: This is job 1
+pipeline.stages.stages0.jobs.jobs0.action.enabled: false
+pipeline.stages.stages0.jobs.jobs0.action.final: false
+pipeline.stages.stages0.jobs.jobs0.action.id: 0
+pipeline.stages.stages0.jobs.jobs0.action.lastmodified: 0
+pipeline.stages.stages0.jobs.jobs0.action.name: Job 1
+pipeline.stages.stages0.jobs.jobs0.action.parameters.len: 0
+pipeline.stages.stages0.jobs.jobs0.action.requirements.len: 0
+pipeline.stages.stages0.jobs.jobs0.enabled: false
+pipeline.stages.stages0.jobs.jobs0.lastmodified: 0
+pipeline.stages.stages0.jobs.jobs0.pipelineactionid: 0
+pipeline.stages.stages0.jobs.jobs0.pipelinestageid: 0
+pipeline.stages.stages0.jobs.len: 1
+pipeline.stages.stages0.lastmodified: 0
+pipeline.stages.stages0.name: stage 1
+pipeline.stages.stages0.pipelinebuildjobs.len: 0
+pipeline.stages.stages0.pipelineid: 0
+pipeline.stages.stages0.prerequisites.len: 0
+pipeline.stages.stages0.runjobs.len: 0
+pipeline.type: build
+`
+	assert.Equal(t, expected, out.String())
+	assert.NoError(t, err)
 }
