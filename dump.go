@@ -128,18 +128,28 @@ func fdumpStructField(w map[string]string, s reflect.Value, roots []string, form
 				data = f.Interface()
 				if f.Kind() == reflect.Interface {
 					im := map[string]interface{}{}
-					if mapstructure.Decode(data, im) != nil {
-						if err := fDumpMap(w, im, append(roots, s.Type().Field(i).Name), formatters...); err != nil {
-							return err
+					if mapstructure.Decode(data, &im) != nil {
+						if len(im) > 0 {
+							if err := fDumpMap(w, im, append(roots, s.Type().Field(i).Name), formatters...); err != nil {
+								return err
+							}
+							return nil
 						}
-						continue
 					}
+
 					am, ok := data.([]interface{})
 					if ok {
 						if err := fDumpArray(w, am, append(roots, s.Type().Field(i).Name), formatters...); err != nil {
 							return err
 						}
-						continue
+						return nil
+					}
+					mi, ok := data.(map[string]interface{})
+					if ok {
+						if err := fDumpMap(w, mi, append(roots, s.Type().Field(i).Name), formatters...); err != nil {
+							return err
+						}
+						return nil
 					}
 				}
 				k := fmt.Sprintf("%s.%s", strings.Join(sliceFormat(roots, formatters), "."), format(s.Type().Field(i).Name, formatters))
@@ -184,12 +194,26 @@ func fdumpStruct(w map[string]string, i interface{}, roots []string, formatters 
 			data = s.Interface()
 			if s.Kind() == reflect.Interface {
 				im := map[string]interface{}{}
-				if mapstructure.Decode(data, im) != nil {
-					return fDumpMap(w, im, roots, formatters...)
+				if mapstructure.Decode(data, &im) != nil {
+					if len(im) > 0 {
+						if err := fDumpMap(w, im, roots, formatters...); err != nil {
+							return err
+						}
+						return nil
+					}
 				}
-				am, ok := data.([]interface{})
+				if reflect.TypeOf(data).Kind() == reflect.Slice {
+					if err := fDumpArray(w, data, roots, formatters...); err != nil {
+						return err
+					}
+					return nil
+				}
+				mi, ok := data.(map[string]interface{})
 				if ok {
-					return fDumpArray(w, am, roots, formatters...)
+					if err := fDumpMap(w, mi, roots, formatters...); err != nil {
+						return err
+					}
+					return nil
 				}
 			}
 			k := fmt.Sprintf("%s.%s", strings.Join(sliceFormat(roots, formatters), "."), format(s.Type().Name(), formatters))
@@ -249,9 +273,8 @@ func fDumpArray(w map[string]string, i interface{}, roots []string, formatters .
 						}
 						continue
 					}
-					am, ok := data.([]interface{})
-					if ok {
-						if err := fDumpArray(w, am, croots, formatters...); err != nil {
+					if reflect.TypeOf(data).Kind() == reflect.Slice {
+						if err := fDumpArray(w, data, croots, formatters...); err != nil {
 							return err
 						}
 						continue
@@ -298,16 +321,16 @@ func fDumpMap(w map[string]string, i interface{}, roots []string, formatters ...
 						continue
 					}
 				}
-				am, ok := value.Interface().([]interface{})
+				mi, ok := value.Interface().(map[string]interface{})
 				if ok {
-					if err := fDumpArray(w, am, roots, formatters...); err != nil {
+					if err := fDumpMap(w, mi, roots, formatters...); err != nil {
 						return err
 					}
 					continue
 				}
-				mi, ok := value.Interface().(map[string]interface{})
-				if ok {
-					if err := fDumpMap(w, mi, roots, formatters...); err != nil {
+
+				if reflect.TypeOf(value.Interface()).Kind() == reflect.Slice {
+					if err := fDumpArray(w, value.Interface(), roots, formatters...); err != nil {
 						return err
 					}
 					continue
