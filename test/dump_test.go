@@ -439,3 +439,33 @@ pipeline.type: build
 	assert.Equal(t, expected, out.String())
 	assert.NoError(t, err)
 }
+
+type Result struct {
+	Body     string      `json:"body,omitempty" yaml:"body,omitempty"`
+	BodyJSON interface{} `json:"bodyjson,omitempty" yaml:"bodyjson,omitempty"`
+}
+
+func TestWeird(t *testing.T) {
+
+	r := Result{}
+	r.Body = "foo"
+	r.BodyJSON = map[string]interface{}{
+		"cardID":      "1234",
+		"items":       []string{},
+		"description": "yolo",
+	}
+
+	expected := `result.body: foo
+result.bodyjson.cardid: 1234
+result.bodyjson.description: yolo
+result.bodyjson.items.len: 0
+result.bodyjson.len: 3
+`
+
+	out := &bytes.Buffer{}
+	err := dump.Fdump(out, r, dump.WithDefaultLowerCaseFormatter())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, out.String())
+
+	dump.Dump(r)
+}
