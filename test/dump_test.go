@@ -93,8 +93,8 @@ func TestDumpStruct_Map(t *testing.T) {
 
 	a := TM{A: 23, B: "foo bar"}
 	a.C = map[string]Tbis{}
-	a.C["1"] = Tbis{"lol", "lol"}
-	a.C["2"] = Tbis{"lel", "lel"}
+	a.C["bar"] = Tbis{"lel", "lel"}
+	a.C["foo"] = Tbis{"lol", "lol"}
 
 	out := &bytes.Buffer{}
 	err := dump.Fdump(out, a)
@@ -102,11 +102,11 @@ func TestDumpStruct_Map(t *testing.T) {
 
 	expected := `TM.A: 23
 TM.B: foo bar
-TM.C.1.Tbis.Cbis: lol
-TM.C.1.Tbis.Cter: lol
-TM.C.2.Tbis.Cbis: lel
-TM.C.2.Tbis.Cter: lel
 TM.C.Len: 2
+TM.C.bar.Tbis.Cbis: lel
+TM.C.bar.Tbis.Cter: lel
+TM.C.foo.Tbis.Cbis: lol
+TM.C.foo.Tbis.Cter: lol
 `
 	assert.Equal(t, expected, out.String())
 
@@ -328,6 +328,16 @@ func TestMapStringInterface(t *testing.T) {
 	t.Log(dump.Sdump(myMap))
 	assert.NoError(t, err)
 	assert.Equal(t, 4, len(result))
+
+	expected := `id: ID
+len: 3
+name: foo
+value: bar
+`
+	out := &bytes.Buffer{}
+	err = dump.Fdump(out, myMap, dump.WithDefaultLowerCaseFormatter())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, out.String())
 }
 
 func TestFromJSON(t *testing.T) {
@@ -445,21 +455,36 @@ type Result struct {
 	BodyJSON interface{} `json:"bodyjson,omitempty" yaml:"bodyjson,omitempty"`
 }
 
-func TestWeird(t *testing.T) {
+func TestMapStringInterfaceInStruct(t *testing.T) {
 
 	r := Result{}
 	r.Body = "foo"
 	r.BodyJSON = map[string]interface{}{
-		"cardID":      "1234",
-		"items":       []string{},
+		"cardID": "1234",
+		"items":  []string{"foo", "beez"},
+		"test": Result{
+			Body: "12",
+			BodyJSON: map[string]interface{}{
+				"card": "@",
+				"yolo": 3,
+				"beez": true,
+			},
+		},
 		"description": "yolo",
 	}
 
 	expected := `result.body: foo
 result.bodyjson.cardid: 1234
 result.bodyjson.description: yolo
-result.bodyjson.items.len: 0
-result.bodyjson.len: 3
+result.bodyjson.items.items0: foo
+result.bodyjson.items.items1: beez
+result.bodyjson.items.len: 2
+result.bodyjson.len: 4
+result.bodyjson.test.result.body: 12
+result.bodyjson.test.result.bodyjson.beez: true
+result.bodyjson.test.result.bodyjson.card: @
+result.bodyjson.test.result.bodyjson.len: 3
+result.bodyjson.test.result.bodyjson.yolo: 3
 `
 
 	out := &bytes.Buffer{}
@@ -467,5 +492,5 @@ result.bodyjson.len: 3
 	assert.NoError(t, err)
 	assert.Equal(t, expected, out.String())
 
-	dump.Dump(r)
+	//dump.Dump(r)
 }
