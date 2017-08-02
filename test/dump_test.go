@@ -271,21 +271,25 @@ func TestComplex(t *testing.T) {
 Pipeline.GroupPermission.Len: 0
 Pipeline.ID: 0
 Pipeline.LastModified: 0
+Pipeline.LastPipelineBuild:
 Pipeline.Name: MyPipeline
 Pipeline.Parameter.Len: 0
 Pipeline.Permission: 0
 Pipeline.ProjectID: 0
+Pipeline.ProjectKey:
 Pipeline.Stages.Len: 1
 Pipeline.Stages.Stages0.BuildOrder: 1
 Pipeline.Stages.Stages0.Enabled: true
 Pipeline.Stages.Stages0.ID: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Actions.Len: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Description:
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Enabled: false
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Final: false
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.ID: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.LastModified: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Name: Script
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Len: 1
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Description:
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.ID: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Name: script
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Type: text
@@ -301,6 +305,7 @@ Pipeline.Stages.Stages0.Jobs.Jobs0.Action.LastModified: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Name: Job 1
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Parameters.Len: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Requirements.Len: 0
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Type:
 Pipeline.Stages.Stages0.Jobs.Jobs0.Enabled: false
 Pipeline.Stages.Stages0.Jobs.Jobs0.LastModified: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.PipelineActionID: 0
@@ -312,6 +317,7 @@ Pipeline.Stages.Stages0.PipelineBuildJobs.Len: 0
 Pipeline.Stages.Stages0.PipelineID: 0
 Pipeline.Stages.Stages0.Prerequisites.Len: 0
 Pipeline.Stages.Stages0.RunJobs.Len: 0
+Pipeline.Stages.Stages0.Status:
 Pipeline.Type: build
 `
 	assert.Equal(t, expected, out.String())
@@ -403,21 +409,25 @@ func TestComplexWithFormatter(t *testing.T) {
 pipeline.grouppermission.len: 0
 pipeline.id: 0
 pipeline.lastmodified: 0
+pipeline.lastpipelinebuild:
 pipeline.name: MyPipeline
 pipeline.parameter.len: 0
 pipeline.permission: 0
 pipeline.projectid: 0
+pipeline.projectkey:
 pipeline.stages.len: 1
 pipeline.stages.stages0.buildorder: 1
 pipeline.stages.stages0.enabled: true
 pipeline.stages.stages0.id: 0
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.actions.len: 0
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.description:
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.enabled: false
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.final: false
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.id: 0
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.lastmodified: 0
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.name: Script
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.len: 1
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.parameters0.description:
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.parameters0.id: 0
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.parameters0.name: script
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.parameters0.type: text
@@ -433,6 +443,7 @@ pipeline.stages.stages0.jobs.jobs0.action.lastmodified: 0
 pipeline.stages.stages0.jobs.jobs0.action.name: Job 1
 pipeline.stages.stages0.jobs.jobs0.action.parameters.len: 0
 pipeline.stages.stages0.jobs.jobs0.action.requirements.len: 0
+pipeline.stages.stages0.jobs.jobs0.action.type:
 pipeline.stages.stages0.jobs.jobs0.enabled: false
 pipeline.stages.stages0.jobs.jobs0.lastmodified: 0
 pipeline.stages.stages0.jobs.jobs0.pipelineactionid: 0
@@ -444,10 +455,13 @@ pipeline.stages.stages0.pipelinebuildjobs.len: 0
 pipeline.stages.stages0.pipelineid: 0
 pipeline.stages.stages0.prerequisites.len: 0
 pipeline.stages.stages0.runjobs.len: 0
+pipeline.stages.stages0.status:
 pipeline.type: build
 `
 	assert.Equal(t, expected, out.String())
 	assert.NoError(t, err)
+	dump.Dump(p)
+
 }
 
 type Result struct {
@@ -491,6 +505,28 @@ result.bodyjson.test.result.bodyjson.yolo: 3
 	err := dump.Fdump(out, r, dump.WithDefaultLowerCaseFormatter())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, out.String())
+}
 
-	//dump.Dump(r)
+func TestWeird(t *testing.T) {
+	testJson := `{
+	"beez": null,
+	"foo" : "bar",
+	"bou" : [null, "hello"]
+  }`
+
+	var test interface{}
+	json.Unmarshal([]byte(testJson), &test)
+	expected := `beez:
+bou.bou0:
+bou.bou1: hello
+bou.len: 2
+foo: bar
+len: 3
+`
+
+	out := &bytes.Buffer{}
+	err := dump.Fdump(out, test, dump.WithDefaultLowerCaseFormatter())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, out.String())
+
 }
