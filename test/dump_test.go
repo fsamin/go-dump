@@ -597,3 +597,26 @@ foo: bar
 	assert.Equal(t, expected, out.String())
 
 }
+
+type ResultUnexported struct {
+	body *string
+	Foo  string
+}
+
+func TestUnexportedField(t *testing.T) {
+
+	test := ResultUnexported{
+		body: nil,
+		Foo:  "bar",
+	}
+
+	expected := `__type__: ResultUnexported
+resultunexported.foo: bar
+`
+
+	out := &bytes.Buffer{}
+	err := dump.Fdump(out, test, dump.WithDefaultLowerCaseFormatter())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, out.String())
+
+}
