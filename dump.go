@@ -62,7 +62,7 @@ func Fdump(w io.Writer, i interface{}, formatters ...KeyFormatterFunc) (err erro
 		formatters = []KeyFormatterFunc{WithDefaultFormatter()}
 	}
 
-	res, err := ToMap(i, formatters...)
+	res, err := ToStringMap(i, formatters...)
 	if err != nil {
 		return
 	}
@@ -91,7 +91,7 @@ func Sdump(i interface{}, formatters ...KeyFormatterFunc) (string, error) {
 	if formatters == nil {
 		formatters = []KeyFormatterFunc{WithDefaultFormatter()}
 	}
-	m, err := ToMap(i, formatters...)
+	m, err := ToStringMap(i, formatters...)
 	if err != nil {
 		return "", err
 	}
@@ -120,10 +120,8 @@ func valueFromInterface(i interface{}) reflect.Value {
 	return f
 }
 
-func fdumpInterface(w map[string]string, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
-
+func fdumpInterface(w map[string]interface{}, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
 	f := valueFromInterface(i)
-
 	if !validAndNotEmpty(f) {
 		k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, formatters), "."))
 		w[k] = ""
@@ -160,12 +158,12 @@ func fdumpInterface(w map[string]string, i interface{}, roots []string, formatte
 		return nil
 	default:
 		k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, formatters), "."))
-		w[k] = fmt.Sprintf("%v", f.Interface())
+		w[k] = f.Interface()
 	}
 	return nil
 }
 
-func fDumpArray(w map[string]string, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
+func fDumpArray(w map[string]interface{}, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
 	v := reflect.ValueOf(i)
 
 	nodeLen := append(roots, "__Len__")
@@ -191,7 +189,7 @@ func fDumpArray(w map[string]string, i interface{}, roots []string, formatters .
 	return nil
 }
 
-func fDumpMap(w map[string]string, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
+func fDumpMap(w map[string]interface{}, i interface{}, roots []string, formatters ...KeyFormatterFunc) error {
 	v := reflect.ValueOf(i)
 
 	keys := v.MapKeys()
@@ -218,8 +216,7 @@ func fDumpMap(w map[string]string, i interface{}, roots []string, formatters ...
 	return nil
 }
 
-func fdumpStruct(w map[string]string, s reflect.Value, roots []string, formatters ...KeyFormatterFunc) error {
-
+func fdumpStruct(w map[string]interface{}, s reflect.Value, roots []string, formatters ...KeyFormatterFunc) error {
 	for i := 0; i < s.NumField(); i++ {
 		if !s.Field(i).CanInterface() {
 			continue
@@ -232,8 +229,8 @@ func fdumpStruct(w map[string]string, s reflect.Value, roots []string, formatter
 	return nil
 }
 
-// ToMap format passed parameter as a map[string]string. It formats exactly the same as Dump.
-func ToMap(i interface{}, formatters ...KeyFormatterFunc) (res map[string]string, err error) {
+// ToStringMap formats the argument as a map[string]string. It formats exactly the same as Dump.
+func ToStringMap(i interface{}, formatters ...KeyFormatterFunc) (res map[string]string, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if _, ok := r.(runtime.Error); ok {
@@ -244,9 +241,39 @@ func ToMap(i interface{}, formatters ...KeyFormatterFunc) (res map[string]string
 			runtime.Stack(buf, true)
 		}
 	}()
+	ires := map[string]interface{}{}
+	if err = fdumpInterface(ires, i, nil, formatters...); err != nil {
+		return
+	}
 	res = map[string]string{}
+	for k, v := range ires {
+		res[k] = fmt.Sprintf("%v", v)
+	}
+	return
+}
+
+// ToMap dumps argument as a map[string]interface{}, it can also format remove some fields
+func ToMap(i interface{}, filterFields []string, formatters ...KeyFormatterFunc) (res map[string]interface{}, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if _, ok := r.(runtime.Error); ok {
+				panic(r)
+			}
+			err = r.(error)
+			buf := make([]byte, 1<<16)
+			runtime.Stack(buf, true)
+		}
+	}()
+	res = map[string]interface{}{}
 	if err = fdumpInterface(res, i, nil, formatters...); err != nil {
 		return
+	}
+	for _, f := range filterFields {
+		for k := range res {
+			if strings.HasSuffix(strings.ToUpper(k), "."+strings.ToUpper(f)) {
+				delete(res, k)
+			}
+		}
 	}
 	return
 }
