@@ -457,8 +457,6 @@ func TestComplexWithFormatter(t *testing.T) {
 	err := dump.Fdump(out, p, dump.WithDefaultLowerCaseFormatter())
 	assert.NoError(t, err)
 	expected := `__type__: Pipeline
-pipeline.attachedapplication.__len__: 0
-pipeline.attachedapplication.__type__: Array
 pipeline.grouppermission.__len__: 0
 pipeline.grouppermission.__type__: Array
 pipeline.id: 0
@@ -485,12 +483,14 @@ pipeline.stages.stages0.jobs.jobs0.action.actions.__type__: Array
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.__type__: Action
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.actions.__len__: 0
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.actions.__type__: Array
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.alwaysexecuted: false
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.deprecated: false
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.description:
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.enabled: false
-pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.final: false
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.id: 0
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.lastmodified: 0
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.name: Script
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.optional: false
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.__len__: 1
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.__type__: Array
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.parameters0.__type__: Parameter
@@ -502,12 +502,14 @@ pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.parameters
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.requirements.__len__: 0
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.requirements.__type__: Array
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.type: Builtin
+pipeline.stages.stages0.jobs.jobs0.action.alwaysexecuted: false
+pipeline.stages.stages0.jobs.jobs0.action.deprecated: false
 pipeline.stages.stages0.jobs.jobs0.action.description: This is job 1
 pipeline.stages.stages0.jobs.jobs0.action.enabled: false
-pipeline.stages.stages0.jobs.jobs0.action.final: false
 pipeline.stages.stages0.jobs.jobs0.action.id: 0
 pipeline.stages.stages0.jobs.jobs0.action.lastmodified: 0
 pipeline.stages.stages0.jobs.jobs0.action.name: Job 1
+pipeline.stages.stages0.jobs.jobs0.action.optional: false
 pipeline.stages.stages0.jobs.jobs0.action.parameters.__len__: 0
 pipeline.stages.stages0.jobs.jobs0.action.parameters.__type__: Array
 pipeline.stages.stages0.jobs.jobs0.action.requirements.__len__: 0
@@ -517,6 +519,8 @@ pipeline.stages.stages0.jobs.jobs0.enabled: false
 pipeline.stages.stages0.jobs.jobs0.lastmodified: 0
 pipeline.stages.stages0.jobs.jobs0.pipelineactionid: 0
 pipeline.stages.stages0.jobs.jobs0.pipelinestageid: 0
+pipeline.stages.stages0.jobs.jobs0.warnings.__len__: 0
+pipeline.stages.stages0.jobs.jobs0.warnings.__type__: Array
 pipeline.stages.stages0.lastmodified: 0
 pipeline.stages.stages0.name: stage 1
 pipeline.stages.stages0.pipelinebuildjobs.__len__: 0
@@ -527,7 +531,10 @@ pipeline.stages.stages0.prerequisites.__type__: Array
 pipeline.stages.stages0.runjobs.__len__: 0
 pipeline.stages.stages0.runjobs.__type__: Array
 pipeline.stages.stages0.status:
+pipeline.stages.stages0.warnings.__len__: 0
+pipeline.stages.stages0.warnings.__type__: Array
 pipeline.type: build
+pipeline.usage:
 `
 	assert.Equal(t, expected, out.String())
 	assert.NoError(t, err)
