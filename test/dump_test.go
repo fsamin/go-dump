@@ -646,12 +646,12 @@ func TestWithDetailedStruct(t *testing.T) {
 
 	enc := dump.NewDefaultEncoder(new(bytes.Buffer))
 	enc.ExtraFields.DetailedStruct = true
+	enc.ExtraFields.Type = false
 	res, _ := enc.Sdump(a)
 	t.Log(res)
 	assert.Equal(t, `T: {A:23 B:foo bar}
 T.A: 23
 T.B: foo bar
 T.__Len__: 2
-__Type__: T
 `, res)
 }
