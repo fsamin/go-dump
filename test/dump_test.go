@@ -27,6 +27,7 @@ func TestDumpStruct(t *testing.T) {
 
 	expected := `T.A: 23
 T.B: foo bar
+T.__Len__: 3
 __Type__: T
 `
 	assert.Equal(t, expected, out.String())
@@ -56,7 +57,9 @@ func TestDumpStruct_Nested(t *testing.T) {
 T.B: foo bar
 T.C.Cbis: lol
 T.C.Cter: lol
+T.C.__Len__: 3
 T.C.__Type__: Tbis
+T.__Len__: 3
 __Type__: T
 `
 	assert.Equal(t, expected, out.String())
@@ -81,7 +84,9 @@ func TestDumpStruct_NestedWithPointer(t *testing.T) {
 TP.B: foo bar
 TP.C.Cbis: lol
 TP.C.Cter: lol
+TP.C.__Len__: 3
 TP.C.__Type__: Tbis
+TP.__Len__: 3
 __Type__: TP
 `
 	assert.Equal(t, expected, out.String())
@@ -111,10 +116,13 @@ TM.C.__Len__: 2
 TM.C.__Type__: Map
 TM.C.bar.Tbis.Cbis: lel
 TM.C.bar.Tbis.Cter: lel
+TM.C.bar.Tbis.__Len__: 3
 TM.C.bar.Tbis.__Type__: Tbis
 TM.C.foo.Tbis.Cbis: lol
 TM.C.foo.Tbis.Cter: lol
+TM.C.foo.Tbis.__Len__: 3
 TM.C.foo.Tbis.__Type__: Tbis
+TM.__Len__: 3
 __Type__: TM
 `
 	assert.Equal(t, expected, out.String())
@@ -135,13 +143,17 @@ func TestDumpArray(t *testing.T) {
 0.B: foo bar
 0.C.Cbis: lol
 0.C.Cter: lol
+0.C.__Len__: 3
 0.C.__Type__: Tbis
+0.__Len__: 3
 0.__Type__: T
 1.A: 24
 1.B: fee bor
 1.C.Cbis: lel
 1.C.Cter: lel
+1.C.__Len__: 3
 1.C.__Type__: Tbis
+1.__Len__: 3
 1.__Type__: T
 __Len__: 2
 __Type__: Array
@@ -176,13 +188,17 @@ TS.C.C0.A: 23
 TS.C.C0.B: foo bar
 TS.C.C0.C.Cbis: lol
 TS.C.C0.C.Cter: lol
+TS.C.C0.C.__Len__: 3
 TS.C.C0.C.__Type__: Tbis
+TS.C.C0.__Len__: 3
 TS.C.C0.__Type__: T
 TS.C.C1.A: 24
 TS.C.C1.B: fee bor
 TS.C.C1.C.Cbis: lel
 TS.C.C1.C.Cter: lel
+TS.C.C1.C.__Len__: 3
 TS.C.C1.C.__Type__: Tbis
+TS.C.C1.__Len__: 3
 TS.C.C1.__Type__: T
 TS.C.__Len__: 2
 TS.C.__Type__: Array
@@ -190,6 +206,7 @@ TS.D.D0: true
 TS.D.D1: false
 TS.D.__Len__: 2
 TS.D.__Type__: Array
+TS.__Len__: 3
 __Type__: TS
 `
 	assert.Equal(t, expected, out.String())
@@ -205,8 +222,8 @@ func TestToMap(t *testing.T) {
 
 	m, err := dump.ToMap(a, []string{"__Len__", "__Type__"})
 	assert.NoError(t, err)
-	assert.Equal(t, 3, len(m))
-	var m1Found, m2Found bool
+	assert.Equal(t, 4, len(m))
+	var m1Found, m2Found, m3Found bool
 	for k, v := range m {
 		t.Logf("%s: %v (%T)", k, v, v)
 		if k == "T.A" {
@@ -217,9 +234,13 @@ func TestToMap(t *testing.T) {
 			m2Found = true
 			assert.Equal(t, "foo bar", v)
 		}
+		if k == "T" {
+			m3Found = true
+		}
 	}
 	assert.True(t, m1Found, "T.A not found in map")
 	assert.True(t, m2Found, "T.B not found in map")
+	assert.True(t, m3Found, "T not found in map")
 }
 
 func TestToMapWithFormatter(t *testing.T) {
@@ -233,8 +254,8 @@ func TestToMapWithFormatter(t *testing.T) {
 	m, err := dump.ToMap(a, nil, dump.WithDefaultLowerCaseFormatter())
 	t.Log(m)
 	assert.NoError(t, err)
-	assert.Equal(t, 3, len(m))
-	var m1Found, m2Found bool
+	assert.Equal(t, 5, len(m))
+	var m1Found, m2Found, m3Found bool
 	for k, v := range m {
 		if k == "t.a" {
 			m1Found = true
@@ -244,9 +265,13 @@ func TestToMapWithFormatter(t *testing.T) {
 			m2Found = true
 			assert.Equal(t, "foo bar", v)
 		}
+		if k == "t" {
+			m3Found = true
+		}
 	}
 	assert.True(t, m1Found, "t.a not found in map")
 	assert.True(t, m2Found, "t.b not found in map")
+	assert.True(t, m3Found, "t not found in map")
 }
 
 func TestComplex(t *testing.T) {
@@ -289,7 +314,9 @@ func TestComplex(t *testing.T) {
 	out := &bytes.Buffer{}
 	err := dump.Fdump(out, p)
 	assert.NoError(t, err)
-	expected := `Pipeline.GroupPermission.__Len__: 0
+	expected := `Pipeline.AttachedApplication.__Len__: 0
+Pipeline.AttachedApplication.__Type__: Array
+Pipeline.GroupPermission.__Len__: 0
 Pipeline.GroupPermission.__Type__: Array
 Pipeline.ID: 0
 Pipeline.LastModified: 0
@@ -306,7 +333,6 @@ Pipeline.Stages.Stages0.ID: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Actions.__Len__: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Actions.__Type__: Array
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.AlwaysExecuted: false
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Deprecated: false
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Description:
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Enabled: false
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.ID: 0
@@ -318,17 +344,18 @@ Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Name: script
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Type: text
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.Value: echo lol
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.__Len__: 3
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.Parameters0.__Type__: Parameter
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.__Len__: 1
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Parameters.__Type__: Array
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Requirements.__Len__: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Requirements.__Type__: Array
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.Type: Builtin
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.__Len__: 3
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.Actions0.__Type__: Action
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.__Len__: 1
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Actions.__Type__: Array
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.AlwaysExecuted: false
-Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Deprecated: false
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Description: This is job 1
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Enabled: false
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.ID: 0
@@ -340,6 +367,7 @@ Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Parameters.__Type__: Array
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Requirements.__Len__: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Requirements.__Type__: Array
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.Type:
+Pipeline.Stages.Stages0.Jobs.Jobs0.Action.__Len__: 3
 Pipeline.Stages.Stages0.Jobs.Jobs0.Action.__Type__: Action
 Pipeline.Stages.Stages0.Jobs.Jobs0.Enabled: false
 Pipeline.Stages.Stages0.Jobs.Jobs0.LastModified: 0
@@ -347,6 +375,7 @@ Pipeline.Stages.Stages0.Jobs.Jobs0.PipelineActionID: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.PipelineStageID: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Warnings.__Len__: 0
 Pipeline.Stages.Stages0.Jobs.Jobs0.Warnings.__Type__: Array
+Pipeline.Stages.Stages0.Jobs.Jobs0.__Len__: 3
 Pipeline.Stages.Stages0.Jobs.Jobs0.__Type__: Job
 Pipeline.Stages.Stages0.Jobs.__Len__: 1
 Pipeline.Stages.Stages0.Jobs.__Type__: Array
@@ -362,11 +391,12 @@ Pipeline.Stages.Stages0.RunJobs.__Type__: Array
 Pipeline.Stages.Stages0.Status:
 Pipeline.Stages.Stages0.Warnings.__Len__: 0
 Pipeline.Stages.Stages0.Warnings.__Type__: Array
+Pipeline.Stages.Stages0.__Len__: 3
 Pipeline.Stages.Stages0.__Type__: Stage
 Pipeline.Stages.__Len__: 1
 Pipeline.Stages.__Type__: Array
 Pipeline.Type: build
-Pipeline.Usage:
+Pipeline.__Len__: 3
 __Type__: Pipeline
 `
 
@@ -402,7 +432,7 @@ func TestFromJSON(t *testing.T) {
     "blabla": "lol log",
     "boubou": {
         "yo": 1
-    } 
+    }
 }`)
 
 	var i interface{}
@@ -457,6 +487,9 @@ func TestComplexWithFormatter(t *testing.T) {
 	err := dump.Fdump(out, p, dump.WithDefaultLowerCaseFormatter())
 	assert.NoError(t, err)
 	expected := `__type__: Pipeline
+pipeline.__len__: 3
+pipeline.attachedapplication.__len__: 0
+pipeline.attachedapplication.__type__: Array
 pipeline.grouppermission.__len__: 0
 pipeline.grouppermission.__type__: Array
 pipeline.id: 0
@@ -470,21 +503,24 @@ pipeline.projectid: 0
 pipeline.projectkey:
 pipeline.stages.__len__: 1
 pipeline.stages.__type__: Array
+pipeline.stages.stages0.__len__: 3
 pipeline.stages.stages0.__type__: Stage
 pipeline.stages.stages0.buildorder: 1
 pipeline.stages.stages0.enabled: true
 pipeline.stages.stages0.id: 0
 pipeline.stages.stages0.jobs.__len__: 1
 pipeline.stages.stages0.jobs.__type__: Array
+pipeline.stages.stages0.jobs.jobs0.__len__: 3
 pipeline.stages.stages0.jobs.jobs0.__type__: Job
+pipeline.stages.stages0.jobs.jobs0.action.__len__: 3
 pipeline.stages.stages0.jobs.jobs0.action.__type__: Action
 pipeline.stages.stages0.jobs.jobs0.action.actions.__len__: 1
 pipeline.stages.stages0.jobs.jobs0.action.actions.__type__: Array
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.__len__: 3
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.__type__: Action
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.actions.__len__: 0
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.actions.__type__: Array
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.alwaysexecuted: false
-pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.deprecated: false
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.description:
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.enabled: false
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.id: 0
@@ -493,6 +529,7 @@ pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.name: Script
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.optional: false
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.__len__: 1
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.__type__: Array
+pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.parameters0.__len__: 3
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.parameters0.__type__: Parameter
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.parameters0.description:
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.parameters.parameters0.id: 0
@@ -503,7 +540,6 @@ pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.requirements.__len__:
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.requirements.__type__: Array
 pipeline.stages.stages0.jobs.jobs0.action.actions.actions0.type: Builtin
 pipeline.stages.stages0.jobs.jobs0.action.alwaysexecuted: false
-pipeline.stages.stages0.jobs.jobs0.action.deprecated: false
 pipeline.stages.stages0.jobs.jobs0.action.description: This is job 1
 pipeline.stages.stages0.jobs.jobs0.action.enabled: false
 pipeline.stages.stages0.jobs.jobs0.action.id: 0
@@ -534,7 +570,6 @@ pipeline.stages.stages0.status:
 pipeline.stages.stages0.warnings.__len__: 0
 pipeline.stages.stages0.warnings.__type__: Array
 pipeline.type: build
-pipeline.usage:
 `
 	assert.Equal(t, expected, out.String())
 	assert.NoError(t, err)
@@ -564,6 +599,7 @@ func TestMapStringInterfaceInStruct(t *testing.T) {
 	}
 
 	expected := `__type__: Result
+result.__len__: 3
 result.body: foo
 result.bodyjson.__len__: 4
 result.bodyjson.__type__: Map
@@ -573,6 +609,7 @@ result.bodyjson.items.__len__: 2
 result.bodyjson.items.__type__: Array
 result.bodyjson.items.items0: foo
 result.bodyjson.items.items1: beez
+result.bodyjson.test.result.__len__: 3
 result.bodyjson.test.result.__type__: Result
 result.bodyjson.test.result.body: 12
 result.bodyjson.test.result.bodyjson.__len__: 3
@@ -627,6 +664,7 @@ func TestUnexportedField(t *testing.T) {
 	}
 
 	expected := `__type__: ResultUnexported
+resultunexported.__len__: 3
 resultunexported.foo: bar
 `
 

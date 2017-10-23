@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+
+	"github.com/fatih/structs"
 )
 
 // KeyFormatterFunc is a type for key formatting
@@ -96,8 +98,14 @@ func Sdump(i interface{}, formatters ...KeyFormatterFunc) (string, error) {
 		return "", err
 	}
 	res := ""
-	for k, v := range m {
-		res += fmt.Sprintf("%s: %s\n", k, v)
+
+	var keys []string
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		res += fmt.Sprintf("%s: %s\n", k, m[k])
 	}
 	return res, nil
 }
@@ -168,7 +176,7 @@ func fDumpArray(w map[string]interface{}, i interface{}, roots []string, formatt
 
 	nodeLen := append(roots, "__Len__")
 	nodeLenFormatted := strings.Join(sliceFormat(nodeLen, formatters), ".")
-	w[nodeLenFormatted] = fmt.Sprintf("%d", v.Len())
+	w[nodeLenFormatted] = v.Len()
 
 	for i := 0; i < v.Len(); i++ {
 		var l string
@@ -196,7 +204,7 @@ func fDumpMap(w map[string]interface{}, i interface{}, roots []string, formatter
 
 	nodeLen := append(roots, "__Len__")
 	nodeLenFormatted := strings.Join(sliceFormat(nodeLen, formatters), ".")
-	w[nodeLenFormatted] = fmt.Sprintf("%d", len(keys))
+	w[nodeLenFormatted] = len(keys)
 
 	for _, k := range keys {
 		key := fmt.Sprintf("%v", k.Interface())
@@ -217,6 +225,15 @@ func fDumpMap(w map[string]interface{}, i interface{}, roots []string, formatter
 }
 
 func fdumpStruct(w map[string]interface{}, s reflect.Value, roots []string, formatters ...KeyFormatterFunc) error {
+	nodeLen := append(roots, "__Len__")
+	nodeLenFormatted := strings.Join(sliceFormat(nodeLen, formatters), ".")
+	w[nodeLenFormatted] = len(structs.Fields(s))
+
+	structKey := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, formatters), "."))
+	if s.CanInterface() {
+		w[structKey] = s.Interface()
+	}
+
 	for i := 0; i < s.NumField(); i++ {
 		if !s.Field(i).CanInterface() {
 			continue
@@ -247,7 +264,10 @@ func ToStringMap(i interface{}, formatters ...KeyFormatterFunc) (res map[string]
 	}
 	res = map[string]string{}
 	for k, v := range ires {
-		res[k] = fmt.Sprintf("%v", v)
+		vv := reflect.ValueOf(v)
+		if vv.Kind() != reflect.Struct {
+			res[k] = fmt.Sprintf("%s", fmt.Sprintf("%v", v))
+		}
 	}
 	return
 }
