@@ -203,7 +203,7 @@ func TestToMap(t *testing.T) {
 
 	a := T{23, "foo bar"}
 
-	m, err := dump.ToMap(a, []string{"__Len__", "__Type__"})
+	m, err := dump.ToMap(a)
 	assert.NoError(t, err)
 	assert.Equal(t, 3, len(m))
 	var m1Found, m2Found bool
@@ -230,7 +230,7 @@ func TestToMapWithFormatter(t *testing.T) {
 
 	a := T{23, "foo bar"}
 
-	m, err := dump.ToMap(a, nil, dump.WithDefaultLowerCaseFormatter())
+	m, err := dump.ToMap(a, dump.WithDefaultLowerCaseFormatter())
 	t.Log(m)
 	assert.NoError(t, err)
 	assert.Equal(t, 3, len(m))
@@ -399,7 +399,7 @@ value: bar
 
 func TestFromJSON(t *testing.T) {
 	js := []byte(`{
-    "blabla": "lol log",
+    "blabla": "lol log", 
     "boubou": {
         "yo": 1
     } 
@@ -589,14 +589,14 @@ result.bodyjson.test.result.bodyjson.yolo: 3
 }
 
 func TestWeird(t *testing.T) {
-	testJson := `{
+	testJSON := `{
 	"beez": null,
 	"foo" : "bar",
 	"bou" : [null, "hello"]
   }`
 
 	var test interface{}
-	json.Unmarshal([]byte(testJson), &test)
+	json.Unmarshal([]byte(testJSON), &test)
 	expected := `__len__: 3
 __type__: Map
 beez:
@@ -634,5 +634,24 @@ resultunexported.foo: bar
 	err := dump.Fdump(out, test, dump.WithDefaultLowerCaseFormatter())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, out.String())
+}
 
+func TestWithDetailedStruct(t *testing.T) {
+	type T struct {
+		A int
+		B string
+	}
+
+	a := T{23, "foo bar"}
+
+	enc := dump.NewDefaultEncoder(new(bytes.Buffer))
+	enc.ExtraFields.DetailedStruct = true
+	res, _ := enc.Sdump(a)
+	t.Log(res)
+	assert.Equal(t, `T: {A:23 B:foo bar}
+T.A: 23
+T.B: foo bar
+T.__Len__: 2
+__Type__: T
+`, res)
 }
