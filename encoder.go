@@ -193,7 +193,7 @@ func (e *Encoder) fdumpStruct(w map[string]interface{}, s reflect.Value, roots [
 
 		structKey := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), "."))
 		if s.CanInterface() {
-			w[structKey] = fmt.Sprintf("%+v", s.Interface())
+			w[structKey] = s.Interface()
 		}
 	}
 

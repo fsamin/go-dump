@@ -649,7 +649,7 @@ func TestWithDetailedStruct(t *testing.T) {
 	enc.ExtraFields.Type = false
 	res, _ := enc.Sdump(a)
 	t.Log(res)
-	assert.Equal(t, `T: {A:23 B:foo bar}
+	assert.Equal(t, `T: {23 foo bar}
 T.A: 23
 T.B: foo bar
 T.__Len__: 2
