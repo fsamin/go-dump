@@ -16,6 +16,7 @@ type Encoder struct {
 		Len            bool
 		Type           bool
 		DetailedStruct bool
+		DetailedMap    bool
 	}
 	writer io.Writer
 }
@@ -84,7 +85,6 @@ func (e *Encoder) fdumpInterface(w map[string]interface{}, i interface{}, roots 
 		w[k] = ""
 		return nil
 	}
-
 	switch f.Kind() {
 	case reflect.Struct:
 		if e.ExtraFields.Type {
@@ -163,6 +163,10 @@ func (e *Encoder) fDumpMap(w map[string]interface{}, i interface{}, roots []stri
 		nodeLen := append(roots, "__Len__")
 		nodeLenFormatted := strings.Join(sliceFormat(nodeLen, e.Formatters), ".")
 		w[nodeLenFormatted] = len(keys)
+	}
+	if e.ExtraFields.DetailedMap {
+		structKey := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), "."))
+		w[structKey] = i
 	}
 
 	for _, k := range keys {
