@@ -379,6 +379,7 @@ func TestMapStringInterface(t *testing.T) {
 	myMap["id"] = "ID"
 	myMap["name"] = "foo"
 	myMap["value"] = "bar"
+	myMap[""] = "empty"
 
 	result, err := dump.ToStringMap(myMap)
 	t.Log(dump.Sdump(myMap))
