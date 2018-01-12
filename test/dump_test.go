@@ -398,6 +398,24 @@ value: bar
 	assert.Equal(t, expected, out.String())
 }
 
+func TestMapEmptyInterface(t *testing.T) {
+	myMap := make(map[string]interface{})
+	myMap[""] = "empty"
+
+	result, err := dump.ToStringMap(myMap)
+	t.Log(dump.Sdump(myMap))
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(result))
+
+	expected := `__len__: 0
+__type__: Map
+`
+	out := &bytes.Buffer{}
+	err = dump.Fdump(out, myMap, dump.WithDefaultLowerCaseFormatter())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, out.String())
+}
+
 func TestFromJSON(t *testing.T) {
 	js := []byte(`{
     "blabla": "lol log", 
