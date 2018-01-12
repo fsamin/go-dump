@@ -82,7 +82,9 @@ func (e *Encoder) fdumpInterface(w map[string]interface{}, i interface{}, roots 
 	f := valueFromInterface(i)
 	if !validAndNotEmpty(f) {
 		k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), "."))
-		w[k] = ""
+		if k != "" {
+			w[k] = ""
+		}
 		return nil
 	}
 	switch f.Kind() {
