@@ -81,10 +81,11 @@ func (e *Encoder) Sdump(i interface{}) (string, error) {
 func (e *Encoder) fdumpInterface(w map[string]interface{}, i interface{}, roots []string) error {
 	f := valueFromInterface(i)
 	if !validAndNotEmpty(f) {
-		k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), "."))
-		if k != "" {
-			w[k] = ""
+		if len(roots) == 0 {
+			return nil
 		}
+		k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), "."))
+		w[k] = ""
 		return nil
 	}
 	switch f.Kind() {
