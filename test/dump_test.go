@@ -2,11 +2,10 @@ package test
 
 import (
 	"bytes"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"encoding/json"
 
 	"github.com/fsamin/go-dump"
 )
@@ -423,4 +422,48 @@ T.A: 23
 T.B: foo bar
 T.__Len__: 2
 `, res)
+}
+
+func TestDumpJSONInString(t *testing.T) {
+	type T struct {
+		A int
+		B string
+	}
+	value := T{
+		A: 0,
+		B: "{ \"toctoc\": \"Qui est la\"}",
+	}
+
+	e := dump.NewDefaultEncoder(new(bytes.Buffer))
+	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+	e.ExtraFields.DetailedMap = false
+	e.ExtraFields.DetailedStruct = false
+	e.ExtraFields.DeepJSON = true
+	e.ExtraFields.Len = false
+	e.ExtraFields.Type = false
+	m, err := e.ToStringMap(value)
+	assert.NoError(t, err)
+	assert.Equal(t, "Qui est la", m["t.b.toctoc"])
+}
+
+func TestNoDumpJSONInString(t *testing.T) {
+	type T struct {
+		A int
+		B string
+	}
+	value := T{
+		A: 0,
+		B: "{ \"toctoc\": \"Qui est la\"}",
+	}
+
+	e := dump.NewDefaultEncoder(new(bytes.Buffer))
+	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+	e.ExtraFields.DetailedMap = false
+	e.ExtraFields.DetailedStruct = false
+	e.ExtraFields.DeepJSON = false
+	e.ExtraFields.Len = false
+	e.ExtraFields.Type = false
+	m, err := e.ToStringMap(value)
+	assert.NoError(t, err)
+	assert.Equal(t, "{ \"toctoc\": \"Qui est la\"}", m["t.b"])
 }
