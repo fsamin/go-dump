@@ -20,8 +20,7 @@ type Encoder struct {
 		DetailedMap    bool
 		DeepJSON       bool
 	}
-	Decoder64 bool
-	writer    io.Writer
+	writer io.Writer
 }
 
 // NewDefaultEncoder instanciate de default encoder

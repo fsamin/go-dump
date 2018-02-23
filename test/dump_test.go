@@ -2,13 +2,11 @@ package test
 
 import (
 	"bytes"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"encoding/json"
-
-	"encoding/base64"
 	"github.com/fsamin/go-dump"
 )
 
