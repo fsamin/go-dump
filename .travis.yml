@@ -8,3 +8,11 @@ go:
 script:
   - go test ./...
   - go build
+
+addons:
+  sonarcloud:
+    organization: "fsamin-github"
+    token:
+      secure: "FSt6QKI3zANq3+BX33x1Z7TMwFVjGEYJF3QOfpETvrG8YuARhQvmG699yN/q+Jfu2IO6T4KHF7XHGDAM2DhUGhxgJnA+8PaUvnOOQrPXtkasRSAVCvHzGe1IRPp8wH68lirjWiJhur88FlQuh1e4O6pEp3T3IdW2Y0twMFzPPLxORtZ+Py1osOQCYbcZ9fnIUZYpFSMRV0a4JQLmMUuOjpIDzPCSxF6gejfqyjtiIkMljamG91y/EO51N4DKFZ+r6BFnTq8uL4pfzSTqK/FJj+9oqDA49i/seXS8ugn3/v9TwzOBVuAv7icAR0ABJOCUD2/UvYiOY7moTzGGlhv6ANAPkjdomgZ309EWOka+5u59+lGz6s9yzjKQsbt57ZywgrEZbmPNHf7sd85SWzF3aE8Y9C6xur68sRYfl6sSEe1rmZutGZnmHohGpbL+mGCBC4sX5u+Wl5tWI5dIqv25l+C7QWQlmVXTKW9C3Jtj2B+vN+f6VX+kv//OuEVZMlya6Uhnu86In02VKTRo0yURjHm8UowAE5gBIG5LM+ajXlVJpPjh9sEiayqNCln9sc+Pqu9KvWqNqzaicJ9D2B5pB+L/VWDrPOEBF84geJCaNfBhrTWRkVCxQFzpdeLxScHLHZtDGLnKgT6iJbHK8b58Eea8kfb+eS1SboQKiuJvyNc="
+script:
+  - sonar-scanner
