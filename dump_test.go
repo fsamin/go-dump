@@ -1,4 +1,4 @@
-package test
+package dump_test
 
 import (
 	"bytes"
@@ -24,7 +24,35 @@ func TestDumpStruct(t *testing.T) {
 
 	expected := `T.A: 23
 T.B: foo bar
-__Type__: T
+`
+	assert.Equal(t, expected, out.String())
+
+}
+
+func TestDumpStructWithOutPrefix(t *testing.T) {
+	type T struct {
+		A  int
+		B  string
+		TT struct {
+			C string
+			D string
+		}
+	}
+
+	a := T{A: 23, B: "foo bar"}
+	a.TT.C = "c"
+	a.TT.D = "d"
+
+	out := &bytes.Buffer{}
+	dumper := dump.NewEncoder(out)
+	dumper.DisableTypePrefix = true
+	err := dumper.Fdump(a)
+	assert.NoError(t, err)
+
+	expected := `A: 23
+B: foo bar
+TT.C: c
+TT.D: d
 `
 	assert.Equal(t, expected, out.String())
 
@@ -39,11 +67,16 @@ type T struct {
 type Tbis struct {
 	Cbis string
 	Cter string
+	X    *Tter
+}
+
+type Tter struct {
+	X string
 }
 
 func TestDumpStruct_Nested(t *testing.T) {
 
-	a := T{23, "foo bar", Tbis{"lol", "lol"}}
+	a := T{23, "foo bar", Tbis{"lol", "lol", &Tter{"X"}}}
 
 	out := &bytes.Buffer{}
 	err := dump.Fdump(out, a)
@@ -53,8 +86,7 @@ func TestDumpStruct_Nested(t *testing.T) {
 T.B: foo bar
 T.C.Cbis: lol
 T.C.Cter: lol
-T.C.__Type__: Tbis
-__Type__: T
+T.C.X.X: X
 `
 	assert.Equal(t, expected, out.String())
 
@@ -68,7 +100,7 @@ type TP struct {
 
 func TestDumpStruct_NestedWithPointer(t *testing.T) {
 	i := 23
-	a := TP{&i, "foo bar", &Tbis{"lol", "lol"}}
+	a := TP{&i, "foo bar", &Tbis{"lol", "lol", nil}}
 
 	out := &bytes.Buffer{}
 	err := dump.Fdump(out, a)
@@ -78,8 +110,6 @@ func TestDumpStruct_NestedWithPointer(t *testing.T) {
 TP.B: foo bar
 TP.C.Cbis: lol
 TP.C.Cter: lol
-TP.C.__Type__: Tbis
-__Type__: TP
 `
 	assert.Equal(t, expected, out.String())
 
@@ -95,11 +125,15 @@ func TestDumpStruct_Map(t *testing.T) {
 
 	a := TM{A: 23, B: "foo bar"}
 	a.C = map[string]Tbis{}
-	a.C["bar"] = Tbis{"lel", "lel"}
-	a.C["foo"] = Tbis{"lol", "lol"}
+	a.C["bar"] = Tbis{"lel", "lel", nil}
+	a.C["foo"] = Tbis{"lol", "lol", nil}
 
 	out := &bytes.Buffer{}
-	err := dump.Fdump(out, a)
+	dumper := dump.NewEncoder(out)
+	dumper.ExtraFields.Len = true
+	dumper.ExtraFields.Type = true
+
+	err := dumper.Fdump(a)
 	assert.NoError(t, err)
 
 	expected := `TM.A: 23
@@ -120,12 +154,15 @@ __Type__: TM
 
 func TestDumpArray(t *testing.T) {
 	a := []T{
-		{23, "foo bar", Tbis{"lol", "lol"}},
-		{24, "fee bor", Tbis{"lel", "lel"}},
+		{23, "foo bar", Tbis{"lol", "lol", nil}},
+		{24, "fee bor", Tbis{"lel", "lel", nil}},
 	}
 
 	out := &bytes.Buffer{}
-	err := dump.Fdump(out, a)
+	dumper := dump.NewEncoder(out)
+	dumper.ExtraFields.Len = true
+	dumper.ExtraFields.Type = true
+	err := dumper.Fdump(a)
 	assert.NoError(t, err)
 
 	expected := `0.A: 23
@@ -158,14 +195,17 @@ func TestDumpStruct_Array(t *testing.T) {
 		A: 0,
 		B: "here",
 		C: []T{
-			{23, "foo bar", Tbis{"lol", "lol"}},
-			{24, "fee bor", Tbis{"lel", "lel"}},
+			{23, "foo bar", Tbis{"lol", "lol", nil}},
+			{24, "fee bor", Tbis{"lel", "lel", nil}},
 		},
 		D: []bool{true, false},
 	}
 
 	out := &bytes.Buffer{}
-	err := dump.Fdump(out, a)
+	dumper := dump.NewEncoder(out)
+	dumper.ExtraFields.Len = true
+	dumper.ExtraFields.Type = true
+	err := dumper.Fdump(a)
 	assert.NoError(t, err)
 	expected := `TS.A: 0
 TS.B: here
@@ -202,7 +242,7 @@ func TestToMap(t *testing.T) {
 
 	m, err := dump.ToMap(a)
 	assert.NoError(t, err)
-	assert.Equal(t, 3, len(m))
+	assert.Equal(t, 2, len(m))
 	var m1Found, m2Found bool
 	for k, v := range m {
 		t.Logf("%s: %v (%T)", k, v, v)
@@ -230,7 +270,7 @@ func TestToMapWithFormatter(t *testing.T) {
 	m, err := dump.ToMap(a, dump.WithDefaultLowerCaseFormatter())
 	t.Log(m)
 	assert.NoError(t, err)
-	assert.Equal(t, 3, len(m))
+	assert.Equal(t, 2, len(m))
 	var m1Found, m2Found bool
 	for k, v := range m {
 		if k == "t.a" {
@@ -256,11 +296,9 @@ func TestMapStringInterface(t *testing.T) {
 	result, err := dump.ToStringMap(myMap)
 	t.Log(dump.Sdump(myMap))
 	assert.NoError(t, err)
-	assert.Equal(t, 5, len(result))
+	assert.Equal(t, 3, len(result))
 
-	expected := `__len__: 3
-__type__: Map
-id: ID
+	expected := `id: ID
 name: foo
 value: bar
 `
@@ -277,11 +315,9 @@ func TestMapEmptyInterface(t *testing.T) {
 	result, err := dump.ToStringMap(myMap)
 	t.Log(dump.Sdump(myMap))
 	assert.NoError(t, err)
-	assert.Equal(t, 2, len(result))
+	assert.Equal(t, 0, len(result))
 
-	expected := `__len__: 0
-__type__: Map
-`
+	expected := ``
 	out := &bytes.Buffer{}
 	err = dump.Fdump(out, myMap, dump.WithDefaultLowerCaseFormatter())
 	assert.NoError(t, err)
@@ -303,7 +339,7 @@ func TestFromJSON(t *testing.T) {
 	t.Log(dump.Sdump(i))
 	t.Log(result)
 	assert.NoError(t, err)
-	assert.Equal(t, 6, len(result))
+	assert.Equal(t, 2, len(result))
 	assert.Equal(t, "lol log", result["blabla"])
 	assert.Equal(t, "1", result["boubou.yo"])
 }
@@ -314,7 +350,6 @@ type Result struct {
 }
 
 func TestMapStringInterfaceInStruct(t *testing.T) {
-
 	r := Result{}
 	r.Body = "foo"
 	r.BodyJSON = map[string]interface{}{
@@ -331,20 +366,12 @@ func TestMapStringInterfaceInStruct(t *testing.T) {
 		"description": "yolo",
 	}
 
-	expected := `__type__: Result
-result.body: foo
-result.bodyjson.__len__: 4
-result.bodyjson.__type__: Map
+	expected := `result.body: foo
 result.bodyjson.cardid: 1234
 result.bodyjson.description: yolo
-result.bodyjson.items.__len__: 2
-result.bodyjson.items.__type__: Array
 result.bodyjson.items.items0: foo
 result.bodyjson.items.items1: beez
-result.bodyjson.test.result.__type__: Result
 result.bodyjson.test.result.body: 12
-result.bodyjson.test.result.bodyjson.__len__: 3
-result.bodyjson.test.result.bodyjson.__type__: Map
 result.bodyjson.test.result.bodyjson.beez: true
 result.bodyjson.test.result.bodyjson.card: @
 result.bodyjson.test.result.bodyjson.yolo: 3
@@ -365,11 +392,7 @@ func TestWeird(t *testing.T) {
 
 	var test interface{}
 	json.Unmarshal([]byte(testJSON), &test)
-	expected := `__len__: 3
-__type__: Map
-beez:
-bou.__len__: 2
-bou.__type__: Array
+	expected := `beez:
 bou.bou0:
 bou.bou1: hello
 foo: bar
@@ -394,8 +417,7 @@ func TestUnexportedField(t *testing.T) {
 		Foo:  "bar",
 	}
 
-	expected := `__type__: ResultUnexported
-resultunexported.foo: bar
+	expected := `resultunexported.foo: bar
 `
 
 	out := &bytes.Buffer{}
@@ -412,9 +434,10 @@ func TestWithDetailedStruct(t *testing.T) {
 
 	a := T{23, "foo bar"}
 
-	enc := dump.NewDefaultEncoder(new(bytes.Buffer))
+	enc := dump.NewDefaultEncoder()
 	enc.ExtraFields.DetailedStruct = true
 	enc.ExtraFields.Type = false
+	enc.ExtraFields.Len = true
 	res, _ := enc.Sdump(a)
 	t.Log(res)
 	assert.Equal(t, `T: {23 foo bar}
@@ -434,7 +457,7 @@ func TestDumpJSONInString(t *testing.T) {
 		B: "{ \"toctoc\": \"Qui est la\"}",
 	}
 
-	e := dump.NewDefaultEncoder(new(bytes.Buffer))
+	e := dump.NewDefaultEncoder()
 	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 	e.ExtraFields.DetailedMap = false
 	e.ExtraFields.DetailedStruct = false
@@ -456,7 +479,7 @@ func TestNoDumpJSONInString(t *testing.T) {
 		B: "{ \"toctoc\": \"Qui est la\"}",
 	}
 
-	e := dump.NewDefaultEncoder(new(bytes.Buffer))
+	e := dump.NewDefaultEncoder()
 	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 	e.ExtraFields.DetailedMap = false
 	e.ExtraFields.DetailedStruct = false
@@ -466,4 +489,62 @@ func TestNoDumpJSONInString(t *testing.T) {
 	m, err := e.ToStringMap(value)
 	assert.NoError(t, err)
 	assert.Equal(t, "{ \"toctoc\": \"Qui est la\"}", m["t.b"])
+}
+
+func TestBuildEnvironmentVariable(t *testing.T) {
+	type B struct {
+		PartOfB string
+	}
+	type PieceOfConfig struct {
+		B
+		C string
+	}
+	type Config struct {
+		A    string
+		MapB map[string]PieceOfConfig
+	}
+
+	cfg := Config{
+		A: "A",
+		MapB: map[string]PieceOfConfig{
+			"1": PieceOfConfig{
+				B: B{PartOfB: "B"},
+				C: "C",
+			},
+			"2": PieceOfConfig{
+				B: B{PartOfB: "2B"},
+				C: "2C",
+			},
+		},
+	}
+
+	out := &bytes.Buffer{}
+	dumper := dump.NewEncoder(out)
+	dumper.DisableTypePrefix = true
+	dumper.Separator = "_"
+	dumper.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultUpperCaseFormatter()}
+	err := dumper.Fdump(cfg)
+	assert.NoError(t, err)
+	expected := `A: A
+MAPB_1_C: C
+MAPB_1_PARTOFB: B
+MAPB_2_C: 2C
+MAPB_2_PARTOFB: 2B
+`
+	assert.Equal(t, expected, out.String())
+
+	out = &bytes.Buffer{}
+	dumper = dump.NewEncoder(out)
+	dumper.DisableTypePrefix = false
+	dumper.Separator = "_"
+	dumper.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultUpperCaseFormatter()}
+	err = dumper.Fdump(cfg)
+	assert.NoError(t, err)
+	expected = `CONFIG_A: A
+CONFIG_MAPB_1_PIECEOFCONFIG_B_PARTOFB: B
+CONFIG_MAPB_1_PIECEOFCONFIG_C: C
+CONFIG_MAPB_2_PIECEOFCONFIG_B_PARTOFB: 2B
+CONFIG_MAPB_2_PIECEOFCONFIG_C: 2C
+`
+	assert.Equal(t, expected, out.String())
 }

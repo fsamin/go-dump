@@ -1,6 +1,7 @@
 package dump
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,19 +21,25 @@ type Encoder struct {
 		DetailedMap    bool
 		DeepJSON       bool
 	}
-	writer io.Writer
+	Separator         string
+	DisableTypePrefix bool
+	writer            io.Writer
 }
 
-// NewDefaultEncoder instanciate de default encoder
-func NewDefaultEncoder(w io.Writer) *Encoder {
+// NewDefaultEncoder instanciate a go-dump encoder
+func NewDefaultEncoder() *Encoder {
+	return NewEncoder(new(bytes.Buffer))
+}
+
+// NewEncoder instanciate a go-dump encoder over the writer
+func NewEncoder(w io.Writer) *Encoder {
 	enc := &Encoder{
 		Formatters: []KeyFormatterFunc{
 			WithDefaultFormatter(),
 		},
-		writer: w,
+		Separator: ".",
+		writer:    w,
 	}
-	enc.ExtraFields.Len = true
-	enc.ExtraFields.Type = true
 	return enc
 }
 
@@ -81,12 +88,15 @@ func (e *Encoder) Sdump(i interface{}) (string, error) {
 }
 
 func (e *Encoder) fdumpInterface(w map[string]interface{}, i interface{}, roots []string) error {
+	if reflect.ValueOf(i).Kind() == reflect.Ptr && reflect.ValueOf(i).IsNil() {
+		return nil
+	}
 	f := valueFromInterface(i)
 	if !validAndNotEmpty(f) {
 		if len(roots) == 0 {
 			return nil
 		}
-		k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), "."))
+		k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), e.Separator))
 		w[k] = ""
 		return nil
 	}
@@ -94,11 +104,11 @@ func (e *Encoder) fdumpInterface(w map[string]interface{}, i interface{}, roots 
 	case reflect.Struct:
 		if e.ExtraFields.Type {
 			nodeType := append(roots, "__Type__")
-			nodeTypeFormatted := strings.Join(sliceFormat(nodeType, e.Formatters), ".")
+			nodeTypeFormatted := strings.Join(sliceFormat(nodeType, e.Formatters), e.Separator)
 			w[nodeTypeFormatted] = f.Type().Name()
 		}
 		croots := roots
-		if len(roots) == 0 {
+		if len(roots) == 0 && !e.DisableTypePrefix {
 			croots = append(roots, f.Type().Name())
 		}
 		if err := e.fdumpStruct(w, f, croots); err != nil {
@@ -112,7 +122,7 @@ func (e *Encoder) fdumpInterface(w map[string]interface{}, i interface{}, roots 
 	case reflect.Map:
 		if e.ExtraFields.Type {
 			nodeType := append(roots, "__Type__")
-			nodeTypeFormatted := strings.Join(sliceFormat(nodeType, e.Formatters), ".")
+			nodeTypeFormatted := strings.Join(sliceFormat(nodeType, e.Formatters), e.Separator)
 			w[nodeTypeFormatted] = "Map"
 		}
 		if err := e.fDumpMap(w, i, roots); err != nil {
@@ -120,7 +130,7 @@ func (e *Encoder) fdumpInterface(w map[string]interface{}, i interface{}, roots 
 		}
 		return nil
 	default:
-		k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), "."))
+		k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), e.Separator))
 		if e.ExtraFields.DeepJSON && (f.Kind() == reflect.String) {
 			if err := e.fDumpJSON(w, f.Interface().(string), roots, k); err != nil {
 				return err
@@ -170,7 +180,7 @@ func (e *Encoder) fDumpArray(w map[string]interface{}, i interface{}, roots []st
 
 	if e.ExtraFields.Type {
 		nodeType := append(roots, "__Type__")
-		nodeTypeFormatted := strings.Join(sliceFormat(nodeType, e.Formatters), ".")
+		nodeTypeFormatted := strings.Join(sliceFormat(nodeType, e.Formatters), e.Separator)
 		w[nodeTypeFormatted] = "Array"
 	}
 
@@ -178,7 +188,7 @@ func (e *Encoder) fDumpArray(w map[string]interface{}, i interface{}, roots []st
 
 	if e.ExtraFields.Len {
 		nodeLen := append(roots, "__Len__")
-		nodeLenFormatted := strings.Join(sliceFormat(nodeLen, e.Formatters), ".")
+		nodeLenFormatted := strings.Join(sliceFormat(nodeLen, e.Formatters), e.Separator)
 		w[nodeLenFormatted] = v.Len()
 	}
 
@@ -217,7 +227,7 @@ func (e *Encoder) fDumpMap(w map[string]interface{}, i interface{}, roots []stri
 
 		f := valueFromInterface(value.Interface())
 
-		if validAndNotEmpty(f) && f.Type().Kind() == reflect.Struct {
+		if validAndNotEmpty(f) && f.Type().Kind() == reflect.Struct && !e.DisableTypePrefix {
 			croots = append(croots, f.Type().Name())
 		}
 
@@ -228,11 +238,11 @@ func (e *Encoder) fDumpMap(w map[string]interface{}, i interface{}, roots []stri
 
 	if e.ExtraFields.Len {
 		nodeLen := append(roots, "__Len__")
-		nodeLenFormatted := strings.Join(sliceFormat(nodeLen, e.Formatters), ".")
+		nodeLenFormatted := strings.Join(sliceFormat(nodeLen, e.Formatters), e.Separator)
 		w[nodeLenFormatted] = lenKeys
 	}
 	if e.ExtraFields.DetailedMap {
-		structKey := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), "."))
+		structKey := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), e.Separator))
 		w[structKey] = i
 	}
 	return nil
@@ -242,21 +252,24 @@ func (e *Encoder) fdumpStruct(w map[string]interface{}, s reflect.Value, roots [
 	if e.ExtraFields.DetailedStruct {
 		if e.ExtraFields.Len {
 			nodeLen := append(roots, "__Len__")
-			nodeLenFormatted := strings.Join(sliceFormat(nodeLen, e.Formatters), ".")
+			nodeLenFormatted := strings.Join(sliceFormat(nodeLen, e.Formatters), e.Separator)
 			w[nodeLenFormatted] = s.NumField()
 		}
 
-		structKey := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), "."))
+		structKey := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), e.Separator))
 		if s.CanInterface() {
 			w[structKey] = s.Interface()
 		}
 	}
 
 	for i := 0; i < s.NumField(); i++ {
-		if !s.Field(i).CanInterface() {
+		if !validAndNotEmpty(s.Field(i)) {
 			continue
 		}
-		croots := append(roots, s.Type().Field(i).Name)
+		croots := roots
+		if !e.DisableTypePrefix || !s.Type().Field(i).Anonymous {
+			croots = append(croots, s.Type().Field(i).Name)
+		}
 		if err := e.fdumpInterface(w, s.Field(i).Interface(), croots); err != nil {
 			return err
 		}
