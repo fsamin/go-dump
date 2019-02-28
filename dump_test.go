@@ -3,7 +3,11 @@ package dump_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"os"
 	"testing"
+
+	"github.com/spf13/viper"
 
 	"github.com/stretchr/testify/assert"
 
@@ -526,10 +530,10 @@ func TestBuildEnvironmentVariable(t *testing.T) {
 	err := dumper.Fdump(cfg)
 	assert.NoError(t, err)
 	expected := `A: A
+MAPB_1_B_PARTOFB: B
 MAPB_1_C: C
-MAPB_1_PARTOFB: B
+MAPB_2_B_PARTOFB: 2B
 MAPB_2_C: 2C
-MAPB_2_PARTOFB: 2B
 `
 	assert.Equal(t, expected, out.String())
 
@@ -547,4 +551,72 @@ CONFIG_MAPB_2_PIECEOFCONFIG_B_PARTOFB: 2B
 CONFIG_MAPB_2_PIECEOFCONFIG_C: 2C
 `
 	assert.Equal(t, expected, out.String())
+}
+
+func TestEnvVariableWithViper(t *testing.T) {
+	type InnerC struct {
+		InsideInnerC string
+	}
+	type D struct {
+		InsideD string
+	}
+
+	type MyStruct struct {
+		A string
+		B struct {
+			InsideB string
+		}
+		/*C struct {
+			InnerC
+			InsideC string
+		}
+		D map[string]D*/
+	}
+
+	var myStruct MyStruct
+	myStruct.A = "value A"
+	myStruct.B.InsideB = "value B"
+	//myStruct.C.InsideInnerC = "value C (inner C)"
+	//myStruct.C.InsideC = "value C"
+	//myStruct.D = map[string]D{
+	//	"d1": D{InsideD: "value D1"},
+	//	"d2": D{InsideD: "value D2"},
+	//}
+
+	dumper := dump.NewDefaultEncoder()
+	dumper.DisableTypePrefix = true
+	dumper.Separator = "_"
+	dumper.Prefix = "MYSTRUCT"
+	dumper.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultUpperCaseFormatter()}
+	envs, err := dumper.ToStringMap(&myStruct)
+	assert.NoError(t, err)
+	t.Log("go-dump result...")
+
+	for k, v := range envs {
+		t.Log(k, v)
+		os.Setenv(k, v)
+		viper.BindEnv(dumper.ViperKey(k), k)
+	}
+
+	t.Log("env...")
+	for _, e := range os.Environ() {
+		t.Log(e)
+	}
+
+	viperSettings := viper.AllSettings()
+	t.Log("viper results...")
+
+	for k, v := range viperSettings {
+		t.Log(k, v)
+	}
+
+	t.Log("viper unmarshal...")
+
+	var myStructFromViper MyStruct
+	err = viper.Unmarshal(&myStructFromViper)
+	assert.NoError(t, err)
+	t.Logf("--> %+v", myStructFromViper)
+
+	assert.Equal(t, fmt.Sprintf("%+v", myStruct), fmt.Sprintf("%+v", myStructFromViper))
+
 }

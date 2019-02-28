@@ -23,6 +23,7 @@ type Encoder struct {
 	}
 	Separator         string
 	DisableTypePrefix bool
+	Prefix            string
 	writer            io.Writer
 }
 
@@ -266,10 +267,7 @@ func (e *Encoder) fdumpStruct(w map[string]interface{}, s reflect.Value, roots [
 		if !validAndNotEmpty(s.Field(i)) {
 			continue
 		}
-		croots := roots
-		if !e.DisableTypePrefix || !s.Type().Field(i).Anonymous {
-			croots = append(croots, s.Type().Field(i).Name)
-		}
+		croots := append(roots, s.Type().Field(i).Name)
 		if err := e.fdumpInterface(w, s.Field(i).Interface(), croots); err != nil {
 			return err
 		}
@@ -294,8 +292,12 @@ func (e *Encoder) ToStringMap(i interface{}) (res map[string]string, err error) 
 		return
 	}
 	res = map[string]string{}
+	var prefix string
+	if e.Prefix != "" {
+		prefix = e.Prefix + e.Separator
+	}
 	for k, v := range ires {
-		res[k] = fmt.Sprintf("%v", v)
+		res[prefix+k] = fmt.Sprintf("%v", v)
 	}
 	return
 }
@@ -317,4 +319,13 @@ func (e *Encoder) ToMap(i interface{}) (res map[string]interface{}, err error) {
 		return
 	}
 	return
+}
+
+func (e *Encoder) ViperKey(s string) string {
+	if e.Prefix != "" {
+		s = strings.Replace(s, e.Prefix+e.Separator, "", 1)
+	}
+	s = strings.Replace(s, e.Separator, ".", -1)
+	s = strings.ToLower(s)
+	return s
 }

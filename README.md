@@ -50,12 +50,59 @@ Will return such a map:
     dump.ToMap(a, dump.WithDefaultLowerCaseFormatter())
 ```
 
+## Using go-dump to manage environment variables and using spf13/viper
+```golang
+    type MyStruct struct {
+		A string
+		B struct {
+			InsideB string
+		}
+	}
+
+	var myStruct MyStruct
+	myStruct.A = "value A"
+	myStruct.B.InsideB = "value B"
+	
+
+	dumper := dump.NewDefaultEncoder()
+	dumper.DisableTypePrefix = true
+	dumper.Separator = "_"
+	dumper.Prefix = "MYSTRUCT"
+	dumper.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultUpperCaseFormatter()}
+    envs, _ := dumper.ToStringMap(&myStruct)
+    // envs is the map of the dummped MyStruct 
+```
+
+Will return such a map:
+
+| KEY                    | Value         |
+| ---------------------- | ------------- |
+| MYSTRUCT_A             | value A       |
+| MYSTRUCT_B_INSIDEB     | value B       |
+
+The environement variables can be handled by **viper** [spf13/viper](https://github.com/spf13/viper).
+
+```golang
+    ...
+    for k := range envs {
+		viper.BindEnv(dumper.ViperKey(k), k)
+	}
+    
+    ...
+
+    viperSettings := viper.AllSettings()
+	for k, v := range viperSettings {
+		fmt.Println(k, v)
+    }
+    ...
+```
+
 ## More examples
 
 See [unit tests](dump_test.go) for more examples.
 
 ## Dependencies
 
-Go-Dump needs Go >= 1.7
+Go-Dump needs Go >= 1.8
 
 No external dependencies :)
