@@ -90,7 +90,8 @@ func (e *Encoder) Sdump(i interface{}) (string, error) {
 
 func (e *Encoder) fdumpInterface(w map[string]interface{}, i interface{}, roots []string) error {
 	f := valueFromInterface(i)
-	if !validAndNotEmpty(f) {
+	k := reflect.ValueOf(i).Kind()
+	if k == reflect.Ptr && reflect.ValueOf(i).IsNil() || !validAndNotEmpty(f) {
 		if len(roots) == 0 {
 			return nil
 		}
@@ -261,7 +262,17 @@ func (e *Encoder) fdumpStruct(w map[string]interface{}, s reflect.Value, roots [
 	}
 
 	for i := 0; i < s.NumField(); i++ {
-		if !validAndNotEmpty(s.Field(i)) {
+		k := reflect.ValueOf(i).Kind()
+		if k == reflect.Ptr && reflect.ValueOf(i).IsNil() {
+			if len(roots) == 0 {
+				continue
+			}
+			k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), e.Separator))
+			w[k] = ""
+			continue
+		}
+
+		if !s.Field(i).CanInterface() {
 			continue
 		}
 		croots := append(roots, s.Type().Field(i).Name)
