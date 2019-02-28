@@ -52,25 +52,26 @@ Will return such a map:
 
 ## Using go-dump to manage environment variables and using spf13/viper
 ```golang
+    
     type MyStruct struct {
-		A string
-		B struct {
-			InsideB string
-		}
-	}
+        A string
+        B struct {
+            InsideB string
+        }
+    }
 
-	var myStruct MyStruct
-	myStruct.A = "value A"
-	myStruct.B.InsideB = "value B"
-	
+    var myStruct MyStruct
+    myStruct.A = "value A"
+    myStruct.B.InsideB = "value B"
+    
 
-	dumper := dump.NewDefaultEncoder()
-	dumper.DisableTypePrefix = true
-	dumper.Separator = "_"
-	dumper.Prefix = "MYSTRUCT"
-	dumper.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultUpperCaseFormatter()}
-    envs, _ := dumper.ToStringMap(&myStruct)
-    // envs is the map of the dummped MyStruct 
+    dumper := dump.NewDefaultEncoder()
+    dumper.DisableTypePrefix = true
+    dumper.Separator = "_"
+    dumper.Prefix = "MYSTRUCT"
+    dumper.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultUpperCaseFormatter()}
+
+    envs, _ := dumper.ToStringMap(&myStruct) // envs is the map of the dumped MyStruct 
 ```
 
 Will return such a map:
@@ -85,14 +86,14 @@ The environement variables can be handled by **viper** [spf13/viper](https://git
 ```golang
     ...
     for k := range envs {
-		viper.BindEnv(dumper.ViperKey(k), k)
-	}
+        viper.BindEnv(dumper.ViperKey(k), k)
+    }
     
     ...
 
     viperSettings := viper.AllSettings()
-	for k, v := range viperSettings {
-		fmt.Println(k, v)
+    for k, v := range viperSettings {
+        fmt.Println(k, v)
     }
     ...
 ```
