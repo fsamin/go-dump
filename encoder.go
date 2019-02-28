@@ -89,9 +89,6 @@ func (e *Encoder) Sdump(i interface{}) (string, error) {
 }
 
 func (e *Encoder) fdumpInterface(w map[string]interface{}, i interface{}, roots []string) error {
-	if reflect.ValueOf(i).Kind() == reflect.Ptr && reflect.ValueOf(i).IsNil() {
-		return nil
-	}
 	f := valueFromInterface(i)
 	if !validAndNotEmpty(f) {
 		if len(roots) == 0 {
