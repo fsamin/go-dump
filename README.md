@@ -14,7 +14,7 @@ type T struct {
 
 a := T{23, "foo bar"}
 
-dump.FDump(out, a)
+dump.Fdump(out, a)
 ````
 
 Will print
