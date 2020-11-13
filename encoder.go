@@ -19,6 +19,7 @@ type Encoder struct {
 		Type           bool
 		DetailedStruct bool
 		DetailedMap    bool
+		DetailedArray  bool
 		DeepJSON       bool
 	}
 	Separator         string
@@ -95,7 +96,7 @@ func (e *Encoder) fdumpInterface(w map[string]interface{}, i interface{}, roots 
 		if len(roots) == 0 {
 			return nil
 		}
-		k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), e.Separator))
+		k := strings.Join(sliceFormat(roots, e.Formatters), e.Separator)
 		w[k] = ""
 		return nil
 	}
@@ -129,7 +130,7 @@ func (e *Encoder) fdumpInterface(w map[string]interface{}, i interface{}, roots 
 		}
 		return nil
 	default:
-		k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), e.Separator))
+		k := strings.Join(sliceFormat(roots, e.Formatters), e.Separator)
 		if e.ExtraFields.DeepJSON && (f.Kind() == reflect.String) {
 			if err := e.fDumpJSON(w, f.Interface().(string), roots, k); err != nil {
 				return err
@@ -194,6 +195,11 @@ func (e *Encoder) fDumpArray(w map[string]interface{}, i interface{}, roots []st
 		w[nodeLenFormatted] = v.Len()
 	}
 
+	if e.ExtraFields.DetailedMap {
+		structKey := strings.Join(sliceFormat(roots, e.Formatters), e.Separator)
+		w[structKey] = i
+	}
+
 	for i := 0; i < v.Len(); i++ {
 		var l string
 		//croots := roots
@@ -244,7 +250,7 @@ func (e *Encoder) fDumpMap(w map[string]interface{}, i interface{}, roots []stri
 		w[nodeLenFormatted] = lenKeys
 	}
 	if e.ExtraFields.DetailedMap {
-		structKey := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), e.Separator))
+		structKey := strings.Join(sliceFormat(roots, e.Formatters), e.Separator)
 		w[structKey] = i
 	}
 	return nil
@@ -258,7 +264,7 @@ func (e *Encoder) fdumpStruct(w map[string]interface{}, s reflect.Value, roots [
 			w[nodeLenFormatted] = s.NumField()
 		}
 
-		structKey := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), e.Separator))
+		structKey := strings.Join(sliceFormat(roots, e.Formatters), e.Separator)
 		if s.CanInterface() {
 			w[structKey] = s.Interface()
 		}
@@ -270,7 +276,7 @@ func (e *Encoder) fdumpStruct(w map[string]interface{}, s reflect.Value, roots [
 			if len(roots) == 0 {
 				continue
 			}
-			k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), e.Separator))
+			k := strings.Join(sliceFormat(roots, e.Formatters), e.Separator)
 			w[k] = ""
 			continue
 		}

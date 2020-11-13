@@ -614,3 +614,64 @@ func TestEnvVariableWithViper(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("%+v", myStruct), fmt.Sprintf("%+v", myStructFromViper))
 
 }
+
+func TestTruc(t *testing.T) {
+	var b = `{
+		"user": "STRING",
+		"password": "STRING",
+		"database": "STRING",
+		"writers" : [
+			{ "host": "STRING", "port": "-1" }
+		],
+		"readers" : [
+			{ "host": "STRING", "port": "-1"  }
+		],
+		"analytics" : [
+			{ "host": "STRING", "port": "-1"  }
+		],
+		"type": "STRING",
+		"ssl": "(off|preferred|required|strict)"
+	 }`
+
+	var x = map[string]interface{}{}
+	assert.NoError(t, json.Unmarshal([]byte(b), &x))
+
+	iDumped, err := dump.ToStringMap(x)
+	assert.NoError(t, err)
+
+	fmt.Println(iDumped)
+}
+
+func TestDetailArray(t *testing.T) {
+
+	var b = `{
+		"user": "STRING",
+		"password": "STRING",
+		"database": "STRING",
+		"writers" : [
+			{ "host": "STRING", "port": "-1" }
+		],
+		"readers" : [
+			{ "host": "STRING", "port": "-1"  }
+		],
+		"analytics" : [
+			{ "host": "STRING", "port": "-1"  }
+		],
+		"type": "STRING",
+		"ssl": "(off|preferred|required|strict)"
+	 }`
+
+	var x = map[string]interface{}{}
+	assert.NoError(t, json.Unmarshal([]byte(b), &x))
+
+	e := dump.NewDefaultEncoder()
+	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+	e.ExtraFields.DetailedMap = true
+	e.ExtraFields.DetailedStruct = true
+	e.ExtraFields.DetailedArray = true
+
+	m, err := e.ToMap(x)
+	assert.NoError(t, err)
+	t.Logf("shoud be an array: %T %v", m["writers"], m["writers"])
+	assert.NotEmpty(t, m["writers"])
+}
