@@ -609,9 +609,9 @@ func TestEnvVariableWithViper(t *testing.T) {
 	var myStructFromViper MyStruct
 	err = viper.Unmarshal(&myStructFromViper)
 	assert.NoError(t, err)
-	t.Logf("--> %+v", myStructFromViper)
+	t.Logf("--> %T %+v", myStructFromViper, myStructFromViper)
 
-	assert.Equal(t, fmt.Sprintf("%+v", myStruct), fmt.Sprintf("%+v", myStructFromViper))
+	assert.Equal(t, myStruct, myStructFromViper)
 
 }
 

@@ -314,7 +314,7 @@ func (e *Encoder) ToStringMap(i interface{}) (res map[string]string, err error) 
 		prefix = e.Prefix + e.Separator
 	}
 	for k, v := range ires {
-		res[prefix+k] = fmt.Sprintf("%v", v)
+		res[prefix+k] = printValue(v)
 	}
 	return
 }
@@ -345,4 +345,29 @@ func (e *Encoder) ViperKey(s string) string {
 	s = strings.Replace(s, e.Separator, ".", -1)
 	s = strings.ToLower(s)
 	return s
+}
+
+func printValue(i interface{}) string {
+	s, is := i.(string)
+	if is {
+		return s
+	}
+	ps, is := i.(*string)
+	if is && ps != nil {
+		return *ps
+	}
+	stringer, is := i.(fmt.Stringer)
+	if is {
+		return stringer.String()
+	}
+	btes, err := json.Marshal(i)
+	if err == nil {
+		compactedBuffer := new(bytes.Buffer)
+		err := json.Compact(compactedBuffer, btes)
+		if err != nil {
+			return string(btes)
+		}
+		return compactedBuffer.String()
+	}
+	return fmt.Sprintf("%v", i)
 }
