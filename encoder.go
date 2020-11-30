@@ -202,7 +202,6 @@ func (e *Encoder) fDumpArray(w map[string]interface{}, i interface{}, roots []st
 
 	for i := 0; i < v.Len(); i++ {
 		var l string
-		//croots := roots
 		var croots []string
 		if len(roots) > 0 {
 			l = roots[len(roots)-1:][0]
@@ -211,6 +210,13 @@ func (e *Encoder) fDumpArray(w map[string]interface{}, i interface{}, roots []st
 			croots = append(roots, fmt.Sprintf("%s%d", l, i))
 		}
 		f := v.Index(i)
+
+		stringer, ok := f.Interface().(fmt.Stringer)
+		if ok {
+			k := strings.Join(sliceFormat(croots, e.Formatters), e.Separator)
+			w[k] = stringer.String()
+		}
+
 		if err := e.fdumpInterface(w, f.Interface(), croots); err != nil {
 			return err
 		}
@@ -235,8 +241,15 @@ func (e *Encoder) fDumpMap(w map[string]interface{}, i interface{}, roots []stri
 
 		f := valueFromInterface(value.Interface())
 
-		if validAndNotEmpty(f) && f.Type().Kind() == reflect.Struct && !e.DisableTypePrefix {
-			croots = append(croots, f.Type().Name())
+		if validAndNotEmpty(f) && f.Type().Kind() == reflect.Struct {
+			stringer, ok := value.Interface().(fmt.Stringer)
+			if ok {
+				structKey := strings.Join(sliceFormat(croots, e.Formatters), e.Separator)
+				w[structKey] = stringer.String()
+			}
+			if !e.DisableTypePrefix {
+				croots = append(croots, f.Type().Name())
+			}
 		}
 
 		if err := e.fdumpInterface(w, value.Interface(), croots); err != nil {
@@ -270,6 +283,7 @@ func (e *Encoder) fdumpStruct(w map[string]interface{}, s reflect.Value, roots [
 		}
 	}
 
+	var atLeastOneField bool
 	for i := 0; i < s.NumField(); i++ {
 		k := reflect.ValueOf(i).Kind()
 		if k == reflect.Ptr && reflect.ValueOf(i).IsNil() {
@@ -278,6 +292,7 @@ func (e *Encoder) fdumpStruct(w map[string]interface{}, s reflect.Value, roots [
 			}
 			k := strings.Join(sliceFormat(roots, e.Formatters), e.Separator)
 			w[k] = ""
+			atLeastOneField = true
 			continue
 		}
 
@@ -285,10 +300,20 @@ func (e *Encoder) fdumpStruct(w map[string]interface{}, s reflect.Value, roots [
 			continue
 		}
 		croots := append(roots, s.Type().Field(i).Name)
+		atLeastOneField = true
 		if err := e.fdumpInterface(w, s.Field(i).Interface(), croots); err != nil {
 			return err
 		}
 	}
+
+	if !atLeastOneField {
+		stringer, ok := s.Interface().(fmt.Stringer)
+		if ok {
+			structKey := strings.Join(sliceFormat(roots, e.Formatters), e.Separator)
+			w[structKey] = stringer.String()
+		}
+	}
+
 	return nil
 }
 

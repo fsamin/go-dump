@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/spf13/viper"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/fsamin/go-dump"
 )
@@ -30,7 +32,6 @@ func TestDumpStruct(t *testing.T) {
 T.B: foo bar
 `
 	assert.Equal(t, expected, out.String())
-
 }
 
 func TestDumpStructWithOutPrefix(t *testing.T) {
@@ -438,7 +439,7 @@ func TestWithDetailedStruct(t *testing.T) {
 	enc.ExtraFields.Len = true
 	res, _ := enc.Sdump(a)
 	t.Log(res)
-	assert.Equal(t, `T: {23 foo bar}
+	assert.Equal(t, `T: {"A":23,"B":"foo bar"}
 T.A: 23
 T.B: foo bar
 T.__Len__: 2
@@ -674,4 +675,41 @@ func TestDetailArray(t *testing.T) {
 	assert.NoError(t, err)
 	t.Logf("shoud be an array: %T %v", m["writers"], m["writers"])
 	assert.NotEmpty(t, m["writers"])
+}
+
+func Test_DumpTime(t *testing.T) {
+	m := map[string]interface{}{
+		"string": "foobar",
+		"date":   time.Date(2020, time.November, 29, 10, 00, 00, 00, time.Local),
+		"dates":  []time.Time{time.Date(2020, time.November, 29, 10, 00, 00, 00, time.Local)},
+	}
+
+	result, err := dump.ToStringMap(m)
+	require.NoError(t, err)
+	t.Log(result)
+
+	require.NotZero(t, result["date"])
+	require.NotZero(t, result["date.Time"])
+	require.NotZero(t, result["dates.dates0"])
+
+}
+
+func Test_DumpTimeWithDetailledStruct(t *testing.T) {
+	m := map[string]interface{}{
+		"string": "foobar",
+		"date":   time.Date(2020, time.November, 29, 10, 00, 00, 00, time.Local),
+		"dates":  []time.Time{time.Date(2020, time.November, 29, 10, 00, 00, 00, time.Local)},
+	}
+
+	dmp := dump.NewDefaultEncoder()
+	dmp.ExtraFields.DetailedStruct = true
+	dmp.ExtraFields.DetailedMap = true
+	dmp.ExtraFields.DetailedArray = true
+	result, err := dmp.ToStringMap(m)
+	t.Log(result)
+	require.NoError(t, err)
+	require.NotZero(t, result["date"])
+	require.NotZero(t, result["date.Time"])
+	require.NotZero(t, result["dates.dates0"])
+
 }
