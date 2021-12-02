@@ -1,0 +1,19 @@
+name: Build & Test from golang:latest
+
+on: [push, pull_request]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    container:  
+      image: golang:latest
+      
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Test
+      run: go test -v ./...
