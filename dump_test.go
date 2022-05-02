@@ -429,9 +429,10 @@ func TestWithDetailedStruct(t *testing.T) {
 	type T struct {
 		A int
 		B string
+		T *T
 	}
 
-	a := T{23, "foo bar"}
+	a := T{23, "foo bar", &T{A: 46, B: "fiz buzz"}}
 
 	enc := dump.NewDefaultEncoder()
 	enc.ExtraFields.DetailedStruct = true
@@ -439,10 +440,14 @@ func TestWithDetailedStruct(t *testing.T) {
 	enc.ExtraFields.Len = true
 	res, _ := enc.Sdump(a)
 	t.Log(res)
-	assert.Equal(t, `T: {"A":23,"B":"foo bar"}
-T.A: 23
+	assert.Equal(t, `T.A: 23
 T.B: foo bar
-T.__Len__: 2
+T.T: {"A":46,"B":"fiz buzz","T":null}
+T.T.A: 46
+T.T.B: fiz buzz
+T.T.T: 
+T.T.__Len__: 3
+T.__Len__: 3
 `, res)
 }
 
