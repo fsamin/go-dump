@@ -195,7 +195,7 @@ func (e *Encoder) fDumpArray(w map[string]interface{}, i interface{}, roots []st
 		w[nodeLenFormatted] = v.Len()
 	}
 
-	if e.ExtraFields.DetailedMap {
+	if e.ExtraFields.DetailedArray && len(roots) > 0 {
 		structKey := strings.Join(sliceFormat(roots, e.Formatters), e.Separator)
 		w[structKey] = i
 	}
@@ -280,7 +280,8 @@ func (e *Encoder) fdumpStruct(w map[string]interface{}, s reflect.Value, roots [
 		}
 
 		structKey := strings.Join(sliceFormat(roots, e.Formatters), e.Separator)
-		if s.CanInterface() {
+		if s.CanInterface() && len(roots) > 1 {
+			fmt.Println(roots, structKey, s.Interface())
 			w[structKey] = s.Interface()
 		}
 	}

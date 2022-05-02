@@ -729,3 +729,42 @@ func Test_DumpTimeWithDetailledStruct(t *testing.T) {
 	require.NotZero(t, result["dates.dates0"])
 
 }
+
+func Test_DumpResultStruct(t *testing.T) {
+	type Result struct {
+		Foo string
+		Bar string
+	}
+	m := Result{Foo: "foo", Bar: "bar"}
+	e := dump.NewDefaultEncoder()
+	e.ExtraFields.Len = true
+	e.ExtraFields.Type = true
+	e.ExtraFields.DetailedStruct = true
+	e.ExtraFields.DetailedMap = true
+	e.ExtraFields.DetailedArray = true
+	result, err := e.ToStringMap(m)
+	require.NoError(t, err)
+	t.Log(result)
+	require.Len(t, result, 4)
+}
+
+func Test_DumpArrayResultStruct(t *testing.T) {
+	type Result struct {
+		Foo string
+		Bar string
+	}
+	m := []Result{
+		{Foo: "foo1", Bar: "bar1"},
+		{Foo: "foo2", Bar: "bar2"},
+	}
+	e := dump.NewDefaultEncoder()
+	e.ExtraFields.Len = true
+	e.ExtraFields.Type = true
+	e.ExtraFields.DetailedStruct = true
+	e.ExtraFields.DetailedMap = true
+	e.ExtraFields.DetailedArray = true
+	result, err := e.ToStringMap(m)
+	require.NoError(t, err)
+	t.Log(result)
+	require.Len(t, result, 10)
+}
