@@ -694,6 +694,22 @@ func Test_DumpTime(t *testing.T) {
 
 }
 
+func Test_DumpMap(t *testing.T) {
+	m := map[string]interface{}{
+		"string": "foobar",
+	}
+	e := dump.NewDefaultEncoder()
+	e.ExtraFields.Len = true
+	e.ExtraFields.Type = true
+	e.ExtraFields.DetailedStruct = true
+	e.ExtraFields.DetailedMap = true
+	e.ExtraFields.DetailedArray = true
+	result, err := e.ToStringMap(m)
+	require.NoError(t, err)
+	t.Log(result)
+	require.Len(t, result, 3)
+}
+
 func Test_DumpTimeWithDetailledStruct(t *testing.T) {
 	m := map[string]interface{}{
 		"string": "foobar",

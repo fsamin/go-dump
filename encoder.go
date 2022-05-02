@@ -263,8 +263,10 @@ func (e *Encoder) fDumpMap(w map[string]interface{}, i interface{}, roots []stri
 		w[nodeLenFormatted] = lenKeys
 	}
 	if e.ExtraFields.DetailedMap {
-		structKey := strings.Join(sliceFormat(roots, e.Formatters), e.Separator)
-		w[structKey] = i
+		if len(roots) != 0 {
+			structKey := strings.Join(sliceFormat(roots, e.Formatters), e.Separator)
+			w[structKey] = i
+		}
 	}
 	return nil
 }
