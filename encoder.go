@@ -281,7 +281,6 @@ func (e *Encoder) fdumpStruct(w map[string]interface{}, s reflect.Value, roots [
 
 		structKey := strings.Join(sliceFormat(roots, e.Formatters), e.Separator)
 		if s.CanInterface() && len(roots) > 1 {
-			fmt.Println(roots, structKey, s.Interface())
 			w[structKey] = s.Interface()
 		}
 	}
