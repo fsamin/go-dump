@@ -22,6 +22,7 @@ type Encoder struct {
 		DetailedArray  bool
 		DeepJSON       bool
 	}
+	ArrayJSONNotation bool
 	Separator         string
 	DisableTypePrefix bool
 	Prefix            string
@@ -203,11 +204,18 @@ func (e *Encoder) fDumpArray(w map[string]interface{}, i interface{}, roots []st
 	for i := 0; i < v.Len(); i++ {
 		var l string
 		var croots []string
+		var skey = fmt.Sprintf("[%d]", i)
 		if len(roots) > 0 {
 			l = roots[len(roots)-1:][0]
-			croots = append(roots, fmt.Sprintf("%s%d", l, i))
+			if !e.ArrayJSONNotation {
+				skey = fmt.Sprintf("%s%d", l, i)
+			}
+			croots = append(roots, skey)
 		} else {
-			croots = append(roots, fmt.Sprintf("%s%d", l, i))
+			if !e.ArrayJSONNotation {
+				skey = fmt.Sprintf("%s%d", l, i)
+			}
+			croots = append(roots, skey)
 		}
 		f := v.Index(i)
 

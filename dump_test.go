@@ -182,6 +182,33 @@ __Type__: Array
 	assert.Equal(t, expected, out.String())
 }
 
+func TestDumpArray2(t *testing.T) {
+	a := []T{
+		{23, "foo bar", Tbis{"lol", "lol"}},
+		{24, "fee bor", Tbis{"lel", "lel"}},
+	}
+
+	out := &bytes.Buffer{}
+	dumper := dump.NewEncoder(out)
+	dumper.ArrayJSONNotation = true
+	dumper.ExtraFields.Len = false
+	dumper.ExtraFields.DetailedStruct = false
+	dumper.ExtraFields.Type = false
+	err := dumper.Fdump(a)
+	assert.NoError(t, err)
+
+	expected := `[0].A: 23
+[0].B: foo bar
+[0].C.Cbis: lol
+[0].C.Cter: lol
+[1].A: 24
+[1].B: fee bor
+[1].C.Cbis: lel
+[1].C.Cter: lel
+`
+	assert.Equal(t, expected, out.String())
+}
+
 type TS struct {
 	A int
 	B string
