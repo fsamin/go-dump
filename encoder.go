@@ -204,14 +204,17 @@ func (e *Encoder) fDumpArray(w map[string]interface{}, i interface{}, roots []st
 	for i := 0; i < v.Len(); i++ {
 		var l string
 		var croots []string
-		var skey = fmt.Sprintf("[%d]", i)
 		if len(roots) > 0 {
 			l = roots[len(roots)-1:][0]
 			if !e.ArrayJSONNotation {
-				skey = fmt.Sprintf("%s%d", l, i)
+				croots = append(roots, fmt.Sprintf("%s%d", l, i))
+			} else {
+				var t = make([]string, len(roots)-1)
+				copy(t, roots[0:len(roots)-1])
+				croots = append(t, fmt.Sprintf("%s[%d]", l, i))
 			}
-			croots = append(roots, skey)
 		} else {
+			var skey = fmt.Sprintf("[%d]", i)
 			if !e.ArrayJSONNotation {
 				skey = fmt.Sprintf("%s%d", l, i)
 			}

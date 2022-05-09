@@ -258,6 +258,38 @@ __Type__: TS
 	assert.Equal(t, expected, out.String())
 }
 
+func TestDumpStruct_Array_New_Array_Notation(t *testing.T) {
+	a := TS{
+		A: 0,
+		B: "here",
+		C: []T{
+			{23, "foo bar", Tbis{"lol", "lol"}},
+			{24, "fee bor", Tbis{"lel", "lel"}},
+		},
+		D: []bool{true, false},
+	}
+
+	out := &bytes.Buffer{}
+	dumper := dump.NewEncoder(out)
+	dumper.ArrayJSONNotation = true
+	err := dumper.Fdump(a)
+	assert.NoError(t, err)
+	expected := `TS.A: 0
+TS.B: here
+TS.C[0].A: 23
+TS.C[0].B: foo bar
+TS.C[0].C.Cbis: lol
+TS.C[0].C.Cter: lol
+TS.C[1].A: 24
+TS.C[1].B: fee bor
+TS.C[1].C.Cbis: lel
+TS.C[1].C.Cter: lel
+TS.D[0]: true
+TS.D[1]: false
+`
+	assert.Equal(t, expected, out.String())
+}
+
 func TestToMap(t *testing.T) {
 	type T struct {
 		A int
