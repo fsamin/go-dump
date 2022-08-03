@@ -98,7 +98,11 @@ func (e *Encoder) fdumpInterface(w map[string]interface{}, i interface{}, roots 
 			return nil
 		}
 		k := strings.Join(sliceFormat(roots, e.Formatters), e.Separator)
-		w[k] = ""
+		var prefix string
+		if e.Prefix != "" {
+			prefix = e.Prefix + e.Separator
+		}
+		w[prefix+k] = ""
 		return nil
 	}
 	switch f.Kind() {
@@ -137,7 +141,11 @@ func (e *Encoder) fdumpInterface(w map[string]interface{}, i interface{}, roots 
 				return err
 			}
 		} else {
-			w[k] = f.Interface()
+			var prefix string
+			if e.Prefix != "" {
+				prefix = e.Prefix + e.Separator
+			}
+			w[prefix+k] = f.Interface()
 		}
 
 	}
@@ -161,7 +169,11 @@ func (e *Encoder) fDumpJSON(w map[string]interface{}, i string, roots []string, 
 	}
 
 	if value == i {
-		w[k] = i
+		var prefix string
+		if e.Prefix != "" {
+			prefix = e.Prefix + e.Separator
+		}
+		w[prefix+k] = i
 		return nil
 	}
 	if err := e.fdumpInterface(w, value, roots); err != nil {
@@ -225,7 +237,11 @@ func (e *Encoder) fDumpArray(w map[string]interface{}, i interface{}, roots []st
 		stringer, ok := f.Interface().(fmt.Stringer)
 		if ok {
 			k := strings.Join(sliceFormat(croots, e.Formatters), e.Separator)
-			w[k] = stringer.String()
+			var prefix string
+			if e.Prefix != "" {
+				prefix = e.Prefix
+			}
+			w[prefix+k] = stringer.String()
 		}
 
 		if err := e.fdumpInterface(w, f.Interface(), croots); err != nil {
@@ -347,12 +363,8 @@ func (e *Encoder) ToStringMap(i interface{}) (res map[string]string, err error) 
 		return
 	}
 	res = map[string]string{}
-	var prefix string
-	if e.Prefix != "" {
-		prefix = e.Prefix + e.Separator
-	}
 	for k, v := range ires {
-		res[prefix+k] = printValue(v)
+		res[k] = printValue(v)
 	}
 	return
 }
