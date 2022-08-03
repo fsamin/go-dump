@@ -228,7 +228,7 @@ func (e *Encoder) fDumpArray(w map[string]interface{}, i interface{}, roots []st
 		} else {
 			var skey = fmt.Sprintf("[%d]", i)
 			if !e.ArrayJSONNotation {
-				skey = fmt.Sprintf("%s%d", l, i)
+				skey = fmt.Sprintf("%s%d", e.Prefix+l, i)
 			}
 			croots = append(roots, skey)
 		}

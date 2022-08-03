@@ -59,6 +59,28 @@ test.T.C.C1: c2
 	assert.Equal(t, expected, out.String())
 }
 
+func TestDumpArrayWithPrefix(t *testing.T) {
+	type T struct {
+		A int
+		B string
+	}
+
+	a := []T{{23, "foo bar"}}
+
+	out := &bytes.Buffer{}
+	e := dump.NewEncoder(out)
+	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultFormatter()}
+	e.Prefix = "test"
+
+	err := e.Fdump(a)
+	assert.NoError(t, err)
+
+	expected := `test.test0.A: 23
+test.test0.B: foo bar
+`
+	assert.Equal(t, expected, out.String())
+}
+
 func TestDumpStructWithOutPrefix(t *testing.T) {
 	type T struct {
 		A  int
