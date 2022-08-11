@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -617,11 +618,11 @@ func TestBuildEnvironmentVariable(t *testing.T) {
 	cfg := Config{
 		A: "A",
 		MapB: map[string]PieceOfConfig{
-			"1": PieceOfConfig{
+			"1": {
 				B: B{PartOfB: "B"},
 				C: "C",
 			},
-			"2": PieceOfConfig{
+			"2": {
 				B: B{PartOfB: "2B"},
 				C: "2C",
 			},
@@ -660,13 +661,6 @@ CONFIG_MAPB_2_PIECEOFCONFIG_C: 2C
 }
 
 func TestEnvVariableWithViper(t *testing.T) {
-	type InnerC struct {
-		InsideInnerC string
-	}
-	type D struct {
-		InsideD string
-	}
-
 	type MyStruct struct {
 		A string
 		B struct {
@@ -878,4 +872,77 @@ func Test_DumpArrayResultStruct(t *testing.T) {
 	require.NoError(t, err)
 	t.Log(result)
 	require.Len(t, result, 10)
+}
+
+func Test_DumpJSONAnnotationResultStruct(t *testing.T) {
+	type Result struct {
+		Foo string `json:"Foo2"`
+	}
+	m := Result{Foo: "foo1"}
+
+	e := dump.NewDefaultEncoder()
+	e.ExtraFields.Len = false
+	e.ExtraFields.Type = false
+	e.ExtraFields.DetailedStruct = true
+	e.ExtraFields.DetailedMap = true
+	e.ExtraFields.DetailedArray = true
+
+	e.ExtraFields.UseJSONTag = true
+
+	e.Formatters = []dump.KeyFormatterFunc{
+		func(s string, level int) string {
+			if level == 0 {
+				return strings.ToLower(s)
+			}
+			return s
+		},
+	}
+
+	result, err := e.ToStringMap(m)
+
+	require.NoError(t, err)
+	t.Log(result)
+	require.Equal(t, "foo1", result["result.Foo2"])
+}
+
+func TestDumpStructWithPrefixJson(t *testing.T) {
+	type PieceOfConfig struct {
+		C string `json:"ZC`
+	}
+
+	type T struct {
+		A  int `json:"AX"`
+		B  string
+		TT struct {
+			C string
+			D string `json:"DY"`
+		}
+		MapB map[string]PieceOfConfig `json:"MMapB"`
+	}
+
+	a := T{A: 23, B: "foo bar"}
+	a.TT.C = "c"
+	a.TT.D = "d"
+
+	a.MapB = map[string]PieceOfConfig{
+		"1": {
+			C: "C",
+		},
+	}
+
+	out := &bytes.Buffer{}
+	dumper := dump.NewEncoder(out)
+	dumper.DisableTypePrefix = true
+	dumper.ExtraFields.UseJSONTag = true
+	err := dumper.Fdump(a)
+	assert.NoError(t, err)
+
+	expected := `AX: 23
+B: foo bar
+MMapB.1.C: C
+TT.C: c
+TT.DY: d
+`
+	assert.Equal(t, expected, out.String())
+
 }
