@@ -21,6 +21,7 @@ type Encoder struct {
 		DetailedMap    bool
 		DetailedArray  bool
 		DeepJSON       bool
+		UseJSONTag     bool
 	}
 	ArrayJSONNotation bool
 	Separator         string
@@ -328,7 +329,12 @@ func (e *Encoder) fdumpStruct(w map[string]interface{}, s reflect.Value, roots [
 		if !s.Field(i).CanInterface() {
 			continue
 		}
-		croots := append(roots, s.Type().Field(i).Name)
+		var croots []string
+		if e.ExtraFields.UseJSONTag && s.Type().Field(i).Tag.Get("json") != "" {
+			croots = append(roots, s.Type().Field(i).Tag.Get("json"))
+		} else {
+			croots = append(roots, s.Type().Field(i).Name)
+		}
 		atLeastOneField = true
 		if err := e.fdumpInterface(w, s.Field(i).Interface(), croots); err != nil {
 			return err

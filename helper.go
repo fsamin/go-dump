@@ -6,11 +6,11 @@ import (
 )
 
 // KeyFormatterFunc is a type for key formatting
-type KeyFormatterFunc func(s string) string
+type KeyFormatterFunc func(s string, level int) string
 
 // WithLowerCaseFormatter formats keys in lowercase
 func WithLowerCaseFormatter() KeyFormatterFunc {
-	return func(s string) string {
+	return func(s string, level int) string {
 		return strings.ToLower(s)
 	}
 }
@@ -18,22 +18,22 @@ func WithLowerCaseFormatter() KeyFormatterFunc {
 // WithDefaultLowerCaseFormatter formats keys in lowercase and apply default formatting
 func WithDefaultLowerCaseFormatter() KeyFormatterFunc {
 	f := WithDefaultFormatter()
-	return func(s string) string {
-		return strings.ToLower(f(s))
+	return func(s string, level int) string {
+		return strings.ToLower(f(s, level))
 	}
 }
 
 // WithDefaultUpperCaseFormatter formats keys in uppercase and apply default formatting
 func WithDefaultUpperCaseFormatter() KeyFormatterFunc {
 	f := WithDefaultFormatter()
-	return func(s string) string {
-		return strings.ToUpper(f(s))
+	return func(s string, level int) string {
+		return strings.ToUpper(f(s, level))
 	}
 }
 
 // WithDefaultFormatter is the default formatter
 func WithDefaultFormatter() KeyFormatterFunc {
-	return func(s string) string {
+	return func(s string, level int) string {
 		s = strings.Replace(s, " ", "_", -1)
 		s = strings.Replace(s, "/", "_", -1)
 		s = strings.Replace(s, ":", "_", -1)
@@ -43,7 +43,7 @@ func WithDefaultFormatter() KeyFormatterFunc {
 
 // NoFormatter doesn't do anything, so to be sure to avoid keys formatting, use only this formatter
 func NoFormatter() KeyFormatterFunc {
-	return func(s string) string {
+	return func(s string, level int) string {
 		return s
 	}
 }
@@ -78,14 +78,14 @@ func validAndNotEmpty(v reflect.Value) bool {
 
 func sliceFormat(s []string, formatters []KeyFormatterFunc) []string {
 	for i := range s {
-		s[i] = format(s[i], formatters)
+		s[i] = format(s[i], formatters, i)
 	}
 	return s
 }
 
-func format(s string, formatters []KeyFormatterFunc) string {
+func format(s string, formatters []KeyFormatterFunc, level int) string {
 	for _, f := range formatters {
-		s = f(s)
+		s = f(s, level)
 	}
 	return s
 }
