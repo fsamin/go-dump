@@ -330,9 +330,15 @@ func (e *Encoder) fdumpStruct(w map[string]interface{}, s reflect.Value, roots [
 			continue
 		}
 		var croots []string
-		if e.ExtraFields.UseJSONTag && s.Type().Field(i).Tag.Get("json") != "" {
-			croots = append(roots, s.Type().Field(i).Tag.Get("json"))
-		} else {
+		var keyNameComputed bool
+		if e.ExtraFields.UseJSONTag {
+			tagValues := strings.Split(s.Type().Field(i).Tag.Get("json"), ",")
+			if len(tagValues) > 0 && tagValues[0] != "omitempty" && tagValues[0] != "" {
+				croots = append(roots, tagValues[0])
+				keyNameComputed = true
+			}
+		}
+		if !keyNameComputed {
 			croots = append(roots, s.Type().Field(i).Name)
 		}
 		atLeastOneField = true
