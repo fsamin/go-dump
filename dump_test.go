@@ -877,8 +877,8 @@ func Test_DumpArrayResultStruct(t *testing.T) {
 func Test_DumpJSONAnnotationResultStruct(t *testing.T) {
 	type Result struct {
 		Foo  string `json:"Foo2,omitempty"`
-		Bar  string `json:"omitempty"`
-		Bar2 string `json:"omitempty"`
+		Bar  string `json:",omitempty"`
+		Bar2 string `json:",omitempty"`
 	}
 	m := Result{Foo: "foo1", Bar: "bar", Bar2: "bar2"}
 
