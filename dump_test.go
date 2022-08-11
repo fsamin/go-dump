@@ -876,9 +876,11 @@ func Test_DumpArrayResultStruct(t *testing.T) {
 
 func Test_DumpJSONAnnotationResultStruct(t *testing.T) {
 	type Result struct {
-		Foo string `json:"Foo2"`
+		Foo  string `json:"Foo2,omitempty"`
+		Bar  string `json:"omitempty"`
+		Bar2 string `json:"omitempty"`
 	}
-	m := Result{Foo: "foo1"}
+	m := Result{Foo: "foo1", Bar: "bar", Bar2: "bar2"}
 
 	e := dump.NewDefaultEncoder()
 	e.ExtraFields.Len = false
@@ -903,6 +905,8 @@ func Test_DumpJSONAnnotationResultStruct(t *testing.T) {
 	require.NoError(t, err)
 	t.Log(result)
 	require.Equal(t, "foo1", result["result.Foo2"])
+	require.Equal(t, "bar", result["result.Bar"])
+	require.Equal(t, "bar2", result["result.Bar2"])
 }
 
 func TestDumpStructWithPrefixJson(t *testing.T) {
@@ -944,5 +948,4 @@ TT.C: c
 TT.DY: d
 `
 	assert.Equal(t, expected, out.String())
-
 }
