@@ -853,6 +853,43 @@ func Test_DumpResultStruct(t *testing.T) {
 	require.Len(t, result, 4)
 }
 
+func Test_DumpCase(t *testing.T) {
+	type Inner struct {
+		Foo   string `json:"foo,omitempty"`
+		FOO   string `json:"FOO,omitempty"`
+		Mixed string `json:"Foo,omitempty"`
+	}
+	type Result struct {
+		Inner Inner
+	}
+
+	m := Result{Inner{Foo: "is_lower", FOO: "is_upper", Mixed: "is_mixed"}}
+	e := dump.NewDefaultEncoder()
+	e.ExtraFields.DetailedStruct = true
+	e.ExtraFields.DetailedMap = true
+	e.ExtraFields.DetailedArray = true
+	e.ExtraFields.UseJSONTag = true
+
+	f := dump.WithDefaultFormatter()
+
+	e.Formatters = []dump.KeyFormatterFunc{
+		func(s string, level int) string {
+			if level == 0 {
+				return strings.ToLower(f(s, level))
+			}
+			return f(s, level)
+		},
+	}
+
+	result, err := e.ToStringMap(m)
+	require.NoError(t, err)
+	t.Log(result)
+	require.Len(t, result, 4)
+	require.Equal(t, "is_lower", result["result.Inner.foo"])
+	require.Equal(t, "is_upper", result["result.Inner.FOO"])
+	require.Equal(t, "is_mixed", result["result.Inner.Foo"])
+}
+
 func Test_DumpArrayResultStruct(t *testing.T) {
 	type Result struct {
 		Foo string
